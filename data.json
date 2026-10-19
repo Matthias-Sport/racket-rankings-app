@@ -1,0 +1,496 @@
+{
+ "generated": "2026-10-19T15:44:43.403Z",
+ "player": "Matthias Homan",
+ "rankings": [
+  {
+   "id": "ccvm",
+   "name": "Ranking CCVM Adultos",
+   "sport": "tennis"
+  },
+  {
+   "id": "cdc",
+   "name": "Ranking Club de Campo",
+   "sport": "tennis",
+   "note": "The site does not publish exact match dates, so each match is dated to the end of its cuadro's play window. Position is your ladder number in that cuadro (lower is better)."
+  }
+ ],
+ "matches": [
+  {
+   "ext": "ccvm:32435",
+   "date": "2025-02-20",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Antonio Huerta Gazapo"
+   ],
+   "score": "6-1 6-2",
+   "result": "W",
+   "notes": "Fase 218 · Grupo 7 · Jornada 5"
+  },
+  {
+   "ext": "ccvm:32425",
+   "date": "2025-03-16",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Luis Molina Díaz"
+   ],
+   "score": "6-2 6-3",
+   "result": "W",
+   "notes": "Fase 218 · Grupo 7 · Jornada 2"
+  },
+  {
+   "ext": "ccvm:32433",
+   "date": "2025-03-16",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Jesús Serrano Gimeno"
+   ],
+   "score": "7-5 6-1",
+   "result": "W",
+   "notes": "Fase 218 · Grupo 7 · Jornada 4"
+  },
+  {
+   "ext": "ccvm:33157",
+   "date": "2025-04-08",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Guillermo Zapatero Ortuño"
+   ],
+   "score": "3-6 6-1 3-6",
+   "result": "L",
+   "notes": "Fase 220 · Grupo 6 · Jornada 4"
+  },
+  {
+   "ext": "ccvm:33161",
+   "date": "2025-04-24",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Carlos García Agustín"
+   ],
+   "score": "6-4 2-6 2-6",
+   "result": "L",
+   "notes": "Fase 220 · Grupo 6 · Jornada 5"
+  },
+  {
+   "ext": "ccvm:33155",
+   "date": "2025-05-11",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Jaime Gonzalez Valcarcel Manzano Monis"
+   ],
+   "score": "6-2 6-3",
+   "result": "W",
+   "notes": "Fase 220 · Grupo 6 · Jornada 3"
+  },
+  {
+   "ext": "ccvm:35361",
+   "date": "2025-09-14",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Jesus Gonzalez Gonzalez"
+   ],
+   "score": "7-5 6-7 [1-0]",
+   "result": "W",
+   "notes": "Fase 232 · Grupo 6 · Jornada 3"
+  },
+  {
+   "ext": "ccvm:35891",
+   "date": "2025-09-23",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Alfonso Najera del Barrio"
+   ],
+   "score": "6-2 7-6",
+   "result": "W",
+   "notes": "Fase 237 · Grupo 6 · Jornada 2"
+  },
+  {
+   "ext": "ccvm:35895",
+   "date": "2025-09-25",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Guillermo Zapatero Ortuño"
+   ],
+   "score": "3-6 3-6",
+   "result": "L",
+   "notes": "Fase 237 · Grupo 6 · Jornada 3"
+  },
+  {
+   "ext": "ccvm:35889",
+   "date": "2025-10-13",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Miguel Gimenez de Cordoba Melgarejo"
+   ],
+   "score": "6-3 6-0",
+   "result": "W",
+   "notes": "Fase 237 · Grupo 6 · Jornada 1"
+  },
+  {
+   "ext": "cdc:407:111-112",
+   "date": "2025-10-14",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "José María Gil-Delgado"
+   ],
+   "score": "6-7 3-6",
+   "result": "L",
+   "notes": "Cuadro 407 · Serie 1",
+   "pos": 112
+  },
+  {
+   "ext": "cdc:408:112-115",
+   "date": "2025-10-28",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Alfonso del Real Soldevilla"
+   ],
+   "score": "6-4 4-6 5-10",
+   "result": "L",
+   "notes": "Cuadro 408 · Serie 3",
+   "pos": 112
+  },
+  {
+   "ext": "ccvm:36897",
+   "date": "2025-11-05",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Iñigo Palanca Gomez-Pablos"
+   ],
+   "score": "5-7 5-7",
+   "result": "L",
+   "notes": "Fase 241 · Grupo 5 · Jornada 3"
+  },
+  {
+   "ext": "cdc:409:115-120",
+   "date": "2025-11-11",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Pablo Pérez-Solero Puig"
+   ],
+   "score": "6-4 (4-3) ret.",
+   "result": "W",
+   "notes": "Cuadro 409 · Serie 5",
+   "pos": 115
+  },
+  {
+   "ext": "cdc:411:115-116",
+   "date": "2025-12-09",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Nicolás Abellán de Hinojosa"
+   ],
+   "score": "6-4 7-6",
+   "result": "W",
+   "notes": "Cuadro 411 · Serie 1",
+   "pos": 115
+  },
+  {
+   "ext": "ccvm:36903",
+   "date": "2025-12-12",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Ignacio Reiris Rico"
+   ],
+   "score": "6-0 6-2",
+   "result": "W",
+   "notes": "Fase 241 · Grupo 5 · Jornada 5"
+  },
+  {
+   "ext": "cdc:413:115-120",
+   "date": "2026-01-13",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Manuel Ruiz Esquivias"
+   ],
+   "score": "7-5 6-0",
+   "result": "W",
+   "notes": "Cuadro 413 · Serie 5",
+   "pos": 115
+  },
+  {
+   "ext": "ccvm:38765",
+   "date": "2026-02-01",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Antonio Serrada Fontes"
+   ],
+   "score": "8-6",
+   "result": "W",
+   "notes": "Fase 244 · Grupo 5 · Jornada 1"
+  },
+  {
+   "ext": "ccvm:38773",
+   "date": "2026-02-01",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Balduin Hesse"
+   ],
+   "score": "10-3",
+   "result": "W",
+   "notes": "Fase 244 · Grupo 5 · Jornada 3"
+  },
+  {
+   "ext": "cdc:415:115-116",
+   "date": "2026-02-17",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Nicolás Abellán de Hinojosa"
+   ],
+   "score": "6-7 6-4 10-3",
+   "result": "W",
+   "notes": "Cuadro 415 · Serie 1",
+   "pos": 115
+  },
+  {
+   "ext": "ccvm:39491",
+   "date": "2026-02-23",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Ignacio Moreno Zapatero"
+   ],
+   "score": "6-4 6-2",
+   "result": "W",
+   "notes": "Fase 246 · Grupo 5 · Jornada 1"
+  },
+  {
+   "ext": "cdc:416:112-115",
+   "date": "2026-03-03",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Alejandro de Rafael Topfer"
+   ],
+   "score": "6-3 6-4",
+   "result": "W",
+   "notes": "Cuadro 416 · Serie 3",
+   "pos": 115
+  },
+  {
+   "ext": "ccvm:39497",
+   "date": "2026-03-06",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Jesus Gonzalez Gonzalez"
+   ],
+   "score": "6-2 6-0",
+   "result": "W",
+   "notes": "Fase 246 · Grupo 5 · Jornada 2"
+  },
+  {
+   "ext": "ccvm:39507",
+   "date": "2026-03-22",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Javier Fernández de Villalta Cubillo"
+   ],
+   "score": "3-6 4-6",
+   "result": "L",
+   "notes": "Fase 246 · Grupo 5 · Jornada 5"
+  },
+  {
+   "ext": "cdc:418:100-107",
+   "date": "2026-04-07",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Daniel Muñoz Almazán"
+   ],
+   "score": "(5-4) ret.",
+   "result": "W",
+   "notes": "Cuadro 418 · Serie 7",
+   "pos": 107
+  },
+  {
+   "ext": "ccvm:40217",
+   "date": "2026-05-03",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Luis Valdés Borruey"
+   ],
+   "score": "6-1",
+   "result": "W",
+   "notes": "Fase 248 · Grupo 4 · Jornada 3"
+  },
+  {
+   "ext": "ccvm:40219",
+   "date": "2026-05-03",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Fernando Junco Anós"
+   ],
+   "score": "6-1 6-4",
+   "result": "W",
+   "notes": "Fase 248 · Grupo 4 · Jornada 4"
+  },
+  {
+   "ext": "cdc:421:103-108",
+   "date": "2026-05-19",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Manuel Ruiz Esquivias"
+   ],
+   "score": "7-5 5-7 10-3",
+   "result": "W",
+   "notes": "Cuadro 421 · Serie 5",
+   "pos": 103
+  },
+  {
+   "ext": "ccvm:43259",
+   "date": "2026-05-25",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Jesús Quesada Ruiz"
+   ],
+   "score": "1-6 4-6",
+   "result": "L",
+   "notes": "Fase 266 · Grupo 4 · Jornada 3"
+  },
+  {
+   "ext": "cdc:422:96-103",
+   "date": "2026-06-02",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Iván López-Belmonte Encina"
+   ],
+   "score": "7-5 6-2",
+   "result": "W",
+   "notes": "Cuadro 422 · Serie 7",
+   "pos": 103
+  },
+  {
+   "ext": "ccvm:43253",
+   "date": "2026-06-11",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Ignacio Reiris Rico"
+   ],
+   "score": "6-3 6-3",
+   "result": "W",
+   "notes": "Fase 266 · Grupo 4 · Jornada 1"
+  },
+  {
+   "ext": "ccvm:43255",
+   "date": "2026-06-14",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Fco. Javier Trillo Osuna"
+   ],
+   "score": "3-6 6-7",
+   "result": "L",
+   "notes": "Fase 266 · Grupo 4 · Jornada 2"
+  },
+  {
+   "ext": "cdc:423:95-96",
+   "date": "2026-06-16",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Luis Eugui Ugarte"
+   ],
+   "score": "6-3 6-6",
+   "result": "W",
+   "notes": "Cuadro 423 · Serie 1",
+   "pos": 96
+  },
+  {
+   "ext": "cdc:424:92-95",
+   "date": "2026-06-30",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Iñigo Peñaranda Real"
+   ],
+   "score": "ret.",
+   "result": "W",
+   "notes": "Cuadro 424 · Serie 3",
+   "pos": 95
+  },
+  {
+   "ext": "cdc:425:97-98",
+   "date": "2026-10-13",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Jesús Revilla Alvarez"
+   ],
+   "score": "6-3 3-6 1-10",
+   "result": "L",
+   "notes": "Cuadro 425 · Serie 1",
+   "pos": 98
+  }
+ ],
+ "upcoming": [
+  {
+   "rankingId": "cdc",
+   "opponent": "Manuel de Castro Zurita",
+   "deadline": "2026-10-27",
+   "label": "Cuadro 426 · Serie 3",
+   "oppPos": 101
+  }
+ ]
+}

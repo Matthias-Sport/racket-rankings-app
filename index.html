@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Court Log</title>
+<style>
+:root{
+  --bg:#f5f6f3;--card:#fff;--ink:#1a2220;--mute:#65706b;--line:#e2e5e0;
+  --accent:#1f6f5c;--accent-ink:#fff;--win:#2b78d6;--loss:#e07b2c;--soft:#eef1ed;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#121615;--card:#1b2120;--ink:#e8ece9;--mute:#98a39e;--line:#2b3331;
+    --accent:#4fb89c;--accent-ink:#0c1512;--win:#5aa0f2;--loss:#f0974d;--soft:#242b29;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar{max-width:1040px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:6px}
+nav{display:flex;gap:2px;flex:1;overflow-x:auto}
+nav a{padding:6px 11px;border-radius:8px;color:var(--mute);white-space:nowrap}
+nav a.on{background:var(--soft);color:var(--ink);font-weight:600;text-decoration:none}
+main{max-width:1040px;margin:0 auto;padding:18px 16px 60px}
+h1{font-size:22px;margin:4px 0 14px}h2{font-size:15px;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.tile b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.tile span{color:var(--mute);font-size:12px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer}
+button.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.sm{padding:2px 8px;font-size:13px}
+button.danger{color:var(--loss)}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 9px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.row>input,.row>select{width:auto;min-width:140px}
+.pills{display:flex;gap:4px}
+.pills button{border-radius:99px;padding:3px 11px;font-size:13px}.pills button.on{background:var(--soft);font-weight:600}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.tw{overflow-x:auto}
+.chip{display:inline-block;min-width:22px;text-align:center;border-radius:6px;font-size:12px;font-weight:700;padding:1px 5px;color:#fff}
+.chip.W{background:var(--win)}.chip.L{background:var(--loss)}
+.mute{color:var(--mute)}.small{font-size:13px}
+.tag{font-size:11px;background:var(--soft);border-radius:6px;padding:1px 6px;color:var(--mute);white-space:nowrap}
+.bar-h{height:8px;background:var(--loss);border-radius:4px;overflow:hidden;min-width:60px}.bar-h i{display:block;height:100%;background:var(--win)}
+svg text{fill:var(--mute);font-size:11px}
+.empty{text-align:center;padding:40px 10px;color:var(--mute)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);width:min(520px,94vw);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--mute);margin-top:4px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+@media(max-width:560px){.two{grid-template-columns:1fr}.hide-s{display:none}}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <span class="brand">🎾 Court Log</span>
+  <nav id="nav"></nav>
+  <div class="pills" id="sportPills"></div>
+  <button class="pri" data-act="add">+ Match</button>
+</div></header>
+<main id="app"></main>
+
+<dialog id="dlg"><form id="mf">
+  <h2 id="dlgTitle">Add match</h2>
+  <div class="two">
+    <div><label>Date</label><input type="date" id="f_date" required></div>
+    <div><label>Ranking / competition</label><select id="f_rank"></select></div>
+  </div>
+  <div id="newRk" class="two" hidden>
+    <div><label>New ranking name</label><input id="f_rkname" placeholder="e.g. Club ladder 2026"></div>
+    <div><label>Sport</label><select id="f_rksport"><option value="tennis">Tennis</option><option value="padel">Padel</option></select></div>
+  </div>
+  <div class="two">
+    <div><label>Format</label><select id="f_type"><option value="singles">Singles</option><option value="doubles">Doubles</option></select></div>
+    <div id="partnerBox"><label>Partner</label><input id="f_partner" list="dl_names" autocomplete="off"></div>
+  </div>
+  <div class="two">
+    <div><label id="oppLabel">Opponent</label><input id="f_opp1" list="dl_names" autocomplete="off" required></div>
+    <div id="opp2Box"><label>Opponent 2</label><input id="f_opp2" list="dl_names" autocomplete="off"></div>
+  </div>
+  <div class="two">
+    <div><label>Score (your games first, e.g. 6-4 3-6 10-8)</label><input id="f_score" placeholder="6-4 3-6 10-8" autocomplete="off"></div>
+    <div><label>Result</label><select id="f_res"><option value="W">Win</option><option value="L">Loss</option></select></div>
+  </div>
+  <label>Round / venue / notes</label><input id="f_notes" autocomplete="off">
+  <datalist id="dl_names"></datalist>
+  <div class="row" style="margin:16px 0 0;justify-content:flex-end">
+    <button type="button" id="cancel">Cancel</button><button class="pri" type="submit">Save</button>
+  </div>
+</form></dialog>
+
+<script>
+const KEY='courtlog.v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const pct=x=>Math.round(x*100)+'%';
+
+/* ---------- storage ---------- */
+let db=load();
+let ui={sport:'all',mSearch:'',mRank:'',mRes:'',oSearch:'',oSort:'played'};
+function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.matches&&r.rankings)return r}catch(e){}return{rankings:[],matches:[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){alert('Could not save to browser storage.')}}
+
+/* ---------- synced data (data.json, written by scripts/scrape.mjs) ---------- */
+let sync={upcoming:[],generated:'',status:'not loaded'};
+let contacts=(()=>{try{return JSON.parse(localStorage.getItem(KEY+'.contacts'))||[]}catch(e){return[]}})();
+const saveContacts=()=>{try{localStorage.setItem(KEY+'.contacts',JSON.stringify(contacts))}catch(e){alert('Could not save contacts.')}};
+async function loadSync(){
+  try{
+    const r=await fetch('data.json?'+Date.now());if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    d.rankings.forEach(rk=>{const x=db.rankings.find(y=>y.id===rk.id);if(x){x.note=rk.note;x.sport=rk.sport}else db.rankings.push(rk)});
+    db.matches=db.matches.filter(m=>!m.ext).concat(d.matches.map(m=>({ts:Date.parse(m.date)||0,...m,id:m.ext})));
+    sync={upcoming:d.upcoming||[],generated:d.generated,status:'ok',player:d.player};
+    save();
+  }catch(e){sync.status='no data.json ('+e.message+')'}
+  render();
+}
+
+/* ---------- stats ---------- */
+function parseScore(s){
+  const o={sw:0,sl:0,gw:0,gl:0};
+  String(s||'').replace(/\(\d+\)/g,'').split(/[\s,;]+/).forEach(t=>{
+    const m=t.match(/^(\[?)(\d+)-(\d+)\]?$/);if(!m)return;
+    const a=+m[2],b=+m[3];
+    if(a>b)o.sw++;else if(b>a)o.sl++;
+    if(!m[1]&&Math.max(a,b)<10){o.gw+=a;o.gl+=b}   // [1-0] or 10+ = match tiebreak, not counted as games
+  });
+  return o;
+}
+function stats(ms){
+  const s={p:ms.length,w:0,l:0,sw:0,sl:0,gw:0,gl:0};
+  ms.forEach(m=>{m.result==='W'?s.w++:s.l++;const x=parseScore(m.score);s.sw+=x.sw;s.sl+=x.sl;s.gw+=x.gw;s.gl+=x.gl});
+  s.pct=s.p?s.w/s.p:0;return s;
+}
+const asc=ms=>[...ms].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0));
+const desc=ms=>asc(ms).reverse();
+const rankOf=m=>db.rankings.find(r=>r.id===m.rankingId)||{name:'(deleted)',sport:'tennis'};
+const visible=()=>db.matches.filter(m=>ui.sport==='all'||rankOf(m).sport===ui.sport);
+function streak(ms){const a=desc(ms);if(!a.length)return '–';let n=0;for(const m of a){if(m.result===a[0].result)n++;else break}return a[0].result+n}
+const chips=(ms,n=10)=>desc(ms).slice(0,n).reverse().map(m=>`<span class="chip ${m.result}">${m.result}</span>`).join(' ');
+const plain=n=>String(n||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+const oppKey=plain;
+function groupOpponents(ms){
+  const map=new Map();
+  ms.forEach(m=>(m.opponents||[]).filter(Boolean).forEach(n=>{
+    const k=oppKey(n);if(!map.has(k))map.set(k,{name:n.trim(),ms:[]});map.get(k).ms.push(m);
+  }));
+  return [...map.values()].map(o=>({...o,st:stats(o.ms),last:desc(o.ms)[0]}));
+}
+function groupPartners(ms){
+  const map=new Map();
+  ms.filter(m=>m.type==='doubles'&&m.partner).forEach(m=>{
+    const k=oppKey(m.partner);if(!map.has(k))map.set(k,{name:m.partner.trim(),ms:[]});map.get(k).ms.push(m);
+  });
+  return [...map.values()].map(o=>({...o,st:stats(o.ms)}));
+}
+const matchLabel=m=>(m.type==='doubles'?`${esc(m.partner||'?')} & me vs `:'')+(m.opponents||[]).filter(Boolean).map(n=>`<a href="#/opponents/${encodeURIComponent(n.trim())}">${esc(n)}</a>`).join(' & ');
+
+/* ---------- charts (inline SVG) ---------- */
+function rollingChart(ms){
+  const a=asc(ms);if(a.length<3)return '<div class="mute small">Need at least 3 matches for a trend.</div>';
+  const W=640,H=190,L=34,R=8,T=8,B=22,pw=W-L-R,ph=H-T-B;
+  const X=i=>L+(a.length===1?0:i/(a.length-1)*pw),Y=v=>T+(1-v)*ph;
+  let w=0;const cum=a.map((m,i)=>{if(m.result==='W')w++;return [X(i),Y(w/(i+1))]});
+  const roll=a.map((m,i)=>{const sl=a.slice(Math.max(0,i-9),i+1);return [X(i),Y(sl.filter(x=>x.result==='W').length/sl.length)]});
+  const path=p=>p.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join('');
+  const grid=[0,.5,1].map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+4}" text-anchor="end">${v*100}%</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Win rate trend">${grid}
+    <path d="${path(cum)}" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="${path(roll)}" fill="none" stroke="var(--win)" stroke-width="2.5"/>
+    <text x="${L}" y="${H-5}">${esc(a[0].date)}</text><text x="${W-R}" y="${H-5}" text-anchor="end">${esc(a[a.length-1].date)}</text></svg>
+    <div class="legend"><span><i style="background:var(--win)"></i>Last 10 matches</span><span><i style="background:var(--mute)"></i>Overall to date</span></div>`;
+}
+function monthlyChart(ms){
+  if(!ms.length)return '';
+  const by={};ms.forEach(m=>{const k=m.date.slice(0,7);(by[k]=by[k]||{w:0,l:0})[m.result==='W'?'w':'l']++});
+  const keys=Object.keys(by).sort();
+  const all=[];let [y,mo]=keys[0].split('-').map(Number);const [ey,em]=keys[keys.length-1].split('-').map(Number);
+  while(y<ey||(y===ey&&mo<=em)){all.push(y+'-'+String(mo).padStart(2,'0'));if(++mo>12){mo=1;y++}}
+  const W=640,H=190,L=26,R=8,T=8,B=24,pw=W-L-R,ph=H-T-B;
+  const max=Math.max(...all.map(k=>(by[k]?by[k].w+by[k].l:0)),1);
+  const bw=Math.min(36,pw/all.length*.7),step=pw/all.length;
+  const bars=all.map((k,i)=>{
+    const d=by[k]||{w:0,l:0},x=L+step*i+(step-bw)/2,hw=d.w/max*ph,hl=d.l/max*ph;
+    const lab=all.length<=14||i%Math.ceil(all.length/12)===0?`<text x="${x+bw/2}" y="${H-7}" text-anchor="middle">${k.slice(2).replace('-','/')}</text>`:'';
+    return `<rect x="${x}" y="${T+ph-hw}" width="${bw}" height="${hw}" fill="var(--win)"><title>${k}: ${d.w}W ${d.l}L</title></rect>
+      <rect x="${x}" y="${T+ph-hw-hl}" width="${bw}" height="${hl}" fill="var(--loss)"><title>${k}: ${d.w}W ${d.l}L</title></rect>${lab}`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Matches per month">
+    <line x1="${L}" x2="${W-R}" y1="${T+ph}" y2="${T+ph}" stroke="var(--line)"/>
+    <text x="${L-5}" y="${T+8}" text-anchor="end">${max}</text>${bars}</svg>
+    <div class="legend"><span><i style="background:var(--win)"></i>Wins</span><span><i style="background:var(--loss)"></i>Losses</span></div>`;
+}
+
+/* ---------- view helpers ---------- */
+function tiles(s,ms){
+  return `<div class="tiles">
+  <div class="tile"><b>${s.p}</b><span>matches</span></div>
+  <div class="tile"><b>${s.w}–${s.l}</b><span>record</span></div>
+  <div class="tile"><b>${pct(s.pct)}</b><span>win rate</span></div>
+  <div class="tile"><b>${s.sw}–${s.sl}</b><span>sets</span></div>
+  <div class="tile"><b>${s.gw}–${s.gl}</b><span>games</span></div>
+  <div class="tile"><b>${streak(ms)}</b><span>current streak</span></div></div>`;
+}
+const winBar=s=>`<div class="bar-h" title="${s.w}W ${s.l}L"><i style="width:${s.pct*100}%"></i></div>`;
+const rec=s=>`${s.w}–${s.l}`;
+function matchTable(ms,{edit=true,showRank=true}={}){
+  if(!ms.length)return '<div class="empty">No matches yet.</div>';
+  return `<div class="tw"><table><thead><tr><th>Date</th>${showRank?'<th class="hide-s">Ranking</th>':''}<th>Opponent</th><th>Score</th><th></th>${edit?'<th></th>':''}</tr></thead><tbody>`+
+    desc(ms).map(m=>`<tr><td class="small">${esc(m.date)}</td>${showRank?`<td class="hide-s small"><a href="#/rankings/${m.rankingId}">${esc(rankOf(m).name)}</a></td>`:''}
+      <td>${matchLabel(m)}${m.notes?`<div class="mute small">${esc(m.notes)}</div>`:''}</td>
+      <td>${esc(m.score||'')}</td><td><span class="chip ${m.result}">${m.result}</span></td>
+      ${edit?(m.ext?'<td><span class="tag" title="Imported from data.json; fix it at the source or re-sync">synced</span></td>':`<td style="white-space:nowrap"><button class="sm" data-act="edit" data-id="${m.id}">Edit</button> <button class="sm danger" data-act="del" data-id="${m.id}">✕</button></td>`):''}</tr>`).join('')+'</tbody></table></div>';
+}
+
+/* ---------- contacts + next match ---------- */
+function findContact(name){
+  const t=plain(name).split(' ').filter(w=>w.length>1&&!['de','del','la','las','los','y','da','van','von'].includes(w));
+  if(!t.length)return null;
+  let best=null,bs=0;
+  contacts.forEach(c=>{const ct=new Set(plain(c.name).split(' '));const hit=t.filter(w=>ct.has(w)).length;
+    const s=hit/t.length;if(hit>=2&&s>bs||hit>=1&&t.length===1&&s>bs){bs=s;best=c}});
+  return bs>=.6?best:null;
+}
+function waLink(phone){let d=String(phone).replace(/[^\d+]/g,'');if(d.startsWith('00'))d='+'+d.slice(2);if(!d.startsWith('+'))d='+34'+d;return 'https://wa.me/'+d.replace('+','')}
+function nextUp(){
+  const ups=sync.upcoming.filter(u=>ui.sport==='all'||(db.rankings.find(r=>r.id===u.rankingId)||{}).sport===ui.sport);
+  if(!ups.length)return '';
+  return `<div class="card"><h2>Next up</h2>`+ups.sort((a,b)=>(a.deadline||'9').localeCompare(b.deadline||'9')).map(u=>{
+    const k=oppKey(u.opponent),past=db.matches.filter(m=>(m.opponents||[]).some(n=>oppKey(n)===k)),s=stats(past),c=findContact(u.opponent);
+    const days=u.deadline?Math.ceil((new Date(u.deadline)-new Date(today()))/864e5):null;
+    return `<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;padding:6px 0">
+      <div><div style="font-size:17px;font-weight:600"><a href="#/opponents/${encodeURIComponent(u.opponent)}">${esc(u.opponent)}</a></div>
+      <div class="mute small">${esc(u.label)}${u.deadline?` · play by <b>${esc(u.deadline)}</b>${days!==null?` (${days>=0?days+' days left':'overdue'})`:''}`:''}</div>
+      <div class="small" style="margin-top:4px">${s.p?`Head-to-head <b>${rec(s)}</b>, last ${esc(desc(past)[0].date)}`:'First meeting'}</div></div>
+      <div class="small" style="text-align:right">${c?`${c.phone?`<div><a href="tel:${esc(c.phone.replace(/[^\d+]/g,''))}">${esc(c.phone)}</a> · <a href="${waLink(c.phone)}" target="_blank" rel="noopener">WhatsApp</a></div>`:''}${c.email?`<div><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></div>`:''}`
+        :`<span class="mute">No contact on file.${contacts.length?'':' <a href="#/data">Import your contact sheet</a>'}</span>`}</div></div>`}).join('')+'</div>';
+}
+function posChart(ms){
+  const a=asc(ms.filter(m=>m.pos));if(a.length<2)return '';
+  const W=640,H=190,L=34,R=8,T=10,B=22,pw=W-L-R,ph=H-T-B;
+  const lo=Math.min(...a.map(m=>m.pos)),hi=Math.max(...a.map(m=>m.pos)),span=Math.max(hi-lo,1);
+  const X=i=>L+i/(a.length-1)*pw,Y=p=>T+(p-lo)/span*ph;   // best (lowest) position at the top
+  const pts=a.map((m,i)=>[X(i),Y(m.pos)]);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Ladder position over time">
+    <text x="${L-5}" y="${T+4}" text-anchor="end">${lo}</text><text x="${L-5}" y="${T+ph+4}" text-anchor="end">${hi}</text>
+    <line x1="${L}" x2="${W-R}" y1="${T}" y2="${T}" stroke="var(--line)"/><line x1="${L}" x2="${W-R}" y1="${T+ph}" y2="${T+ph}" stroke="var(--line)"/>
+    <path d="${pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join('')}" fill="none" stroke="var(--win)" stroke-width="2.5"/>
+    ${a.map((m,i)=>`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="4" fill="${m.result==='W'?'var(--win)':'var(--loss)'}"><title>${esc(m.date)}: position ${m.pos} (${m.result})</title></circle>`).join('')}
+    <text x="${L}" y="${H-5}">${esc(a[0].date)}</text><text x="${W-R}" y="${H-5}" text-anchor="end">${esc(a[a.length-1].date)}</text></svg>
+    <div class="legend"><span>Ladder position (top = better)</span><span><i style="background:var(--win)"></i>won that match</span><span><i style="background:var(--loss)"></i>lost</span></div>`;
+}
+function oppTable(list,{limit}={}){
+  if(!list.length)return '<div class="empty">Nothing here yet.</div>';
+  const rows=(limit?list.slice(0,limit):list).map(o=>`<tr><td><a href="#/opponents/${encodeURIComponent(o.name)}">${esc(o.name)}</a></td>
+    <td class="n">${o.st.p}</td><td class="n">${rec(o.st)}</td><td style="width:90px">${winBar(o.st)}</td><td class="small hide-s">${o.last?esc(o.last.date):''}</td></tr>`).join('');
+  return `<div class="tw"><table><thead><tr><th>Name</th><th class="n">P</th><th class="n">W–L</th><th></th><th class="hide-s">Last</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+const noData=`<div class="card empty"><p><b>No matches yet.</b></p><p>Add your first match, import a CSV, or load sample data to explore.</p>
+<button class="pri" data-act="add">+ Add match</button> <button data-act="sample">Load sample data</button></div>`;
+
+/* ---------- pages ---------- */
+function pageDashboard(){
+  const ms=visible();if(!ms.length)return '<h1>Overview</h1>'+noData;
+  const s=stats(ms);
+  const opps=groupOpponents(ms);
+  const rivals=[...opps].sort((a,b)=>b.st.p-a.st.p||a.name.localeCompare(b.name));
+  const nemesis=opps.filter(o=>o.st.l>o.st.w).sort((a,b)=>(b.st.l-b.st.w)-(a.st.l-a.st.w));
+  const faves=opps.filter(o=>o.st.w>o.st.l).sort((a,b)=>(b.st.w-b.st.l)-(a.st.w-a.st.l));
+  const rks=db.rankings.filter(r=>ui.sport==='all'||r.sport===ui.sport).map(r=>({r,ms:ms.filter(m=>m.rankingId===r.id)})).filter(x=>x.ms.length);
+  return `<h1>Overview</h1>${nextUp()}${tiles(s,ms)}
+  <div class="card"><h2>Recent form</h2>${chips(ms,15)}</div>
+  <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>
+  <div class="card"><h2>By ranking</h2><div class="tw"><table><thead><tr><th>Ranking</th><th class="n">P</th><th class="n">W–L</th><th class="n">Win %</th><th>Form</th></tr></thead><tbody>
+  ${rks.map(({r,ms})=>{const t=stats(ms);return `<tr><td><a href="#/rankings/${r.id}">${esc(r.name)}</a> <span class="tag">${r.sport}</span></td><td class="n">${t.p}</td><td class="n">${rec(t)}</td><td class="n">${pct(t.pct)}</td><td>${chips(ms,5)}</td></tr>`}).join('')}</tbody></table></div></div>
+  <div class="grid g2"><div class="card"><h2>Most played</h2>${oppTable(rivals,{limit:6})}</div>
+  <div class="card"><h2>Toughest opponents</h2>${oppTable(nemesis,{limit:6})}<h2 style="margin-top:14px">Best records against</h2>${oppTable(faves,{limit:6})}</div></div>
+  <div class="card"><h2>Latest matches</h2>${matchTable(desc(ms).slice(0,6),{edit:false})}</div>`;
+}
+function pageMatches(){
+  const opts=db.rankings.map(r=>`<option value="${r.id}" ${ui.mRank===r.id?'selected':''}>${esc(r.name)}</option>`).join('');
+  return `<h1>Matches</h1><div class="row"><input id="mq" placeholder="Search opponent, partner, notes…" value="${esc(ui.mSearch)}">
+  <select id="mr"><option value="">All rankings</option>${opts}</select>
+  <select id="mres"><option value="">W + L</option><option value="W" ${ui.mRes==='W'?'selected':''}>Wins</option><option value="L" ${ui.mRes==='L'?'selected':''}>Losses</option></select></div>
+  <div class="card" id="mlist"></div>`;
+}
+function fillMatches(){
+  const q=ui.mSearch.toLowerCase();
+  const ms=visible().filter(m=>(!ui.mRank||m.rankingId===ui.mRank)&&(!ui.mRes||m.result===ui.mRes)&&
+    (!q||[...(m.opponents||[]),m.partner,m.notes,m.score].join(' ').toLowerCase().includes(q)));
+  $('#mlist').innerHTML=`<div class="mute small" style="margin-bottom:6px">${ms.length} match${ms.length===1?'':'es'} · ${rec(stats(ms))}</div>`+matchTable(ms);
+}
+function pageOpponents(){
+  if(!visible().length)return '<h1>Opponents</h1>'+noData;
+  return `<h1>Opponents</h1><div class="row"><input id="oq" placeholder="Search name…" value="${esc(ui.oSearch)}">
+  <select id="os">${[['played','Most played'],['win','Best win %'],['loss','Worst win %'],['recent','Most recent'],['name','Name']].map(([v,t])=>`<option value="${v}" ${ui.oSort===v?'selected':''}>${t}</option>`).join('')}</select></div>
+  <div class="card" id="olist"></div>`;
+}
+function fillOpponents(){
+  let l=groupOpponents(visible()).filter(o=>o.name.toLowerCase().includes(ui.oSearch.toLowerCase()));
+  const sorts={played:(a,b)=>b.st.p-a.st.p,win:(a,b)=>b.st.pct-a.st.pct||b.st.p-a.st.p,loss:(a,b)=>a.st.pct-b.st.pct||b.st.p-a.st.p,
+    recent:(a,b)=>b.last.date.localeCompare(a.last.date),name:(a,b)=>a.name.localeCompare(b.name)};
+  l.sort(sorts[ui.oSort]);$('#olist').innerHTML=oppTable(l);
+}
+function pageOpponent(name){
+  const k=oppKey(name);
+  const ms=db.matches.filter(m=>(m.opponents||[]).some(n=>n&&oppKey(n)===k));
+  if(!ms.length)return `<h1>${esc(name)}</h1><div class="card empty">No matches against this player. <a href="#/opponents">Back</a></div>`;
+  const s=stats(ms),sing=stats(ms.filter(m=>m.type==='singles')),dbl=stats(ms.filter(m=>m.type==='doubles'));
+  const per=db.rankings.map(r=>({r,s:stats(ms.filter(m=>m.rankingId===r.id))})).filter(x=>x.s.p);
+  const ds=asc(ms);
+  return `<p class="small"><a href="#/opponents">← Opponents</a></p><h1>${esc(ms[0].opponents.find(n=>n&&oppKey(n)===k))}</h1>${tiles(s,ms)}
+  <div class="grid g2"><div class="card"><h2>Head-to-head</h2>
+   <p style="margin:0 0 8px">First met <b>${ds[0].date}</b>, last met <b>${ds[ds.length-1].date}</b></p>
+   <p style="margin:0 0 8px">Singles ${rec(sing)} · Doubles ${rec(dbl)}</p><div>${chips(ms,15)}</div></div>
+   <div class="card"><h2>By ranking</h2><div class="tw"><table><tbody>${per.map(x=>`<tr><td><a href="#/rankings/${x.r.id}">${esc(x.r.name)}</a></td><td class="n">${rec(x.s)}</td><td class="n">${pct(x.s.pct)}</td></tr>`).join('')}</tbody></table></div></div></div>
+  <div class="card"><h2>All meetings</h2>${matchTable(ms)}</div>`;
+}
+function pageRankings(){
+  const list=db.rankings.filter(r=>ui.sport==='all'||r.sport===ui.sport);
+  return `<h1>Rankings</h1><form class="row" id="rkForm"><input id="rkn" placeholder="New ranking name" required>
+  <select id="rks"><option value="tennis">Tennis</option><option value="padel">Padel</option></select><button class="pri">Add ranking</button></form>
+  ${list.length?'':'<div class="card empty">No rankings yet. Add one above.</div>'}
+  <div class="grid g2">${list.map(r=>{const ms=db.matches.filter(m=>m.rankingId===r.id),s=stats(ms);
+   return `<div class="card"><h2><a href="#/rankings/${r.id}">${esc(r.name)}</a> <span class="tag">${r.sport}</span></h2>
+   <div style="font-size:20px;font-weight:700">${rec(s)} <span class="mute small" style="font-weight:400">${s.p?pct(s.pct)+' · '+s.p+' matches':'no matches'}</span></div><div style="margin-top:6px">${chips(ms,10)}</div></div>`}).join('')}</div>`;
+}
+function pageRanking(id){
+  const r=db.rankings.find(x=>x.id===id);if(!r)return '<div class="card empty">Ranking not found. <a href="#/rankings">Back</a></div>';
+  const ms=db.matches.filter(m=>m.rankingId===id);
+  const s=stats(ms),opps=groupOpponents(ms),partners=groupPartners(ms);
+  const sing=stats(ms.filter(m=>m.type==='singles')),dbl=stats(ms.filter(m=>m.type==='doubles'));
+  const rivals=[...opps].sort((a,b)=>b.st.p-a.st.p);
+  return `<p class="small"><a href="#/rankings">← Rankings</a></p>
+  <h1>${esc(r.name)} <span class="tag">${r.sport}</span> <button class="sm" data-act="rename" data-id="${id}">Rename</button> <button class="sm danger" data-act="delrank" data-id="${id}">Delete</button></h1>
+  ${r.note?`<p class="mute small">${esc(r.note)}</p>`:''}
+  ${ms.length?tiles(s,ms)+`<div class="card"><h2>Recent form</h2>${chips(ms,15)}<p class="mute small" style="margin:8px 0 0">Singles ${rec(sing)} · Doubles ${rec(dbl)}</p></div>
+  <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>
+  ${posChart(ms)?`<div class="card"><h2>Position over time</h2>${posChart(ms)}</div>`:''}
+  <div class="grid g2"><div class="card"><h2>Opponents</h2>${oppTable(rivals,{limit:10})}</div>
+  ${partners.length?`<div class="card"><h2>Doubles partners</h2>${oppTable(partners.sort((a,b)=>b.st.p-a.st.p))}</div>`:''}</div>
+  <div class="card"><h2>Matches</h2>${matchTable(ms,{showRank:false})}</div>`:`<div class="card empty">No matches in this ranking yet. <button class="pri" data-act="add">+ Add match</button></div>`}`;
+}
+function pageData(){
+  return `<h1>Data</h1>
+  <div class="card"><h2>Synced results</h2>
+  <p class="small" style="margin:0 0 6px">${sync.status==='ok'?`Loaded <b>${db.matches.filter(m=>m.ext).length}</b> matches for ${esc(sync.player||'you')} from <code>data.json</code>, generated ${esc(sync.generated.slice(0,16).replace('T',' '))} UTC.`:`<span class="mute">${esc(sync.status)}</span>`}</p>
+  <p class="mute small" style="margin:0 0 10px">Refresh with <code>node scripts/scrape.mjs</code> (CCVM tennis and Club de Campo). On GitHub it can run daily by itself, see README.</p>
+  <button data-act="resync">Reload data.json</button></div>
+  <div class="card"><h2>Contacts</h2>
+  <p class="mute small">Stored in this browser only (never uploaded). Imports add to what is stored (existing people are updated), so you can bring in the club PDF list and the CCVM group list one after the other. Use a CSV with a name column plus phone and/or email (headers like name, nombre, teléfono, móvil, email). Names can be “Surname, Name” or “Name Surname”.</p>
+  <div class="row"><button data-act="importcontacts">Import contacts CSV…</button><span class="small mute">${contacts.length} contacts stored</span>${contacts.length?'<button class="danger sm" data-act="clearcontacts">Remove all</button>':''}</div></div>
+  <div class="card"><h2>Backup</h2><p class="mute small">Everything is stored in this browser only. Export a backup regularly, and use it to move data between devices.</p>
+  <div class="row"><button data-act="exportjson">Export backup (JSON)</button><button data-act="exportcsv">Export matches (CSV)</button>
+  <button data-act="importjson">Restore backup…</button></div></div>
+  <div class="card"><h2>Import matches from CSV</h2><p class="mute small">Columns: <code>date, ranking, sport, type, partner, opponent1, opponent2, score, result, notes</code>.
+  Rankings are created automatically. If <code>result</code> is empty it is derived from the score (your games first). Results copied from a ranking site can be reshaped into this format and pasted into a spreadsheet.</p>
+  <div class="row"><button data-act="importcsv">Choose CSV file…</button><button data-act="csvtemplate">Download template</button></div></div>
+  <div class="card"><h2>Other</h2><div class="row"><button data-act="sample">Load sample data</button><button class="danger" data-act="clear">Delete all data</button></div></div>
+  <input type="file" id="file" hidden>`;
+}
+
+/* ---------- router ---------- */
+function render(){
+  const h=location.hash.replace(/^#\/?/,'')||'dashboard';
+  const [sec,arg]=h.split('/');
+  $('#nav').innerHTML=[['dashboard','Overview'],['matches','Matches'],['opponents','Opponents'],['rankings','Rankings'],['data','Data']]
+    .map(([k,t])=>`<a href="#/${k}" class="${sec===k?'on':''}">${t}</a>`).join('');
+  $('#sportPills').innerHTML=[['all','All'],['tennis','Tennis'],['padel','Padel']].map(([k,t])=>`<button data-sport="${k}" class="${ui.sport===k?'on':''}">${t}</button>`).join('');
+  const a=arg?decodeURIComponent(arg):'';
+  const page={dashboard:pageDashboard,matches:pageMatches,opponents:()=>a?pageOpponent(a):pageOpponents(),rankings:()=>a?pageRanking(a):pageRankings(),data:pageData}[sec]||pageDashboard;
+  $('#app').innerHTML=page();
+  if(sec==='matches'&&$('#mlist'))fillMatches();
+  if(sec==='opponents'&&!a&&$('#olist'))fillOpponents();
+  refreshNames();
+}
+window.addEventListener('hashchange',()=>{render();scrollTo(0,0)});
+
+/* ---------- match dialog ---------- */
+const dlg=$('#dlg');let editing=null;
+function refreshNames(){
+  const set=new Set();db.matches.forEach(m=>[m.partner,...(m.opponents||[])].forEach(n=>n&&set.add(n.trim())));
+  $('#dl_names').innerHTML=[...set].sort().map(n=>`<option value="${esc(n)}">`).join('');
+}
+function syncForm(){
+  const d=$('#f_type').value==='doubles';
+  $('#partnerBox').hidden=!d;$('#opp2Box').hidden=!d;$('#oppLabel').textContent=d?'Opponent 1':'Opponent';
+  $('#newRk').hidden=$('#f_rank').value!=='__new';
+}
+function openDialog(m){
+  editing=m||null;
+  $('#dlgTitle').textContent=m?'Edit match':'Add match';
+  const last=desc(db.matches)[0];
+  $('#f_rank').innerHTML=db.rankings.map(r=>`<option value="${r.id}">${esc(r.name)} (${r.sport})</option>`).join('')+'<option value="__new">+ New ranking…</option>';
+  const hashR=location.hash.match(/rankings\/(\w+)/);
+  $('#f_date').value=m?m.date:today();
+  $('#f_rank').value=m?m.rankingId:(hashR?hashR[1]:(last?last.rankingId:'__new'));
+  if(!$('#f_rank').value)$('#f_rank').value='__new';
+  $('#f_type').value=m?m.type:(last?last.type:'singles');
+  $('#f_partner').value=m?.partner||'';
+  $('#f_opp1').value=m?.opponents?.[0]||'';$('#f_opp2').value=m?.opponents?.[1]||'';
+  $('#f_score').value=m?.score||'';$('#f_res').value=m?.result||'W';$('#f_notes').value=m?.notes||'';
+  $('#f_rkname').value='';
+  syncForm();dlg.showModal();$('#f_opp1').focus();
+}
+$('#f_type').onchange=syncForm;$('#f_rank').onchange=syncForm;
+$('#f_score').oninput=()=>{const x=parseScore($('#f_score').value);if(x.sw>x.sl)$('#f_res').value='W';else if(x.sl>x.sw)$('#f_res').value='L'};
+$('#cancel').onclick=()=>dlg.close();
+$('#mf').onsubmit=e=>{
+  e.preventDefault();
+  let rid=$('#f_rank').value;
+  if(rid==='__new'){
+    const n=$('#f_rkname').value.trim();if(!n){alert('Please name the new ranking.');return}
+    rid=uid();db.rankings.push({id:rid,name:n,sport:$('#f_rksport').value});
+  }
+  const dbl=$('#f_type').value==='doubles';
+  const rec={id:editing?editing.id:uid(),ts:editing?editing.ts:Date.now(),date:$('#f_date').value,rankingId:rid,type:$('#f_type').value,
+    partner:dbl?$('#f_partner').value.trim():'',opponents:[$('#f_opp1').value.trim(),dbl?$('#f_opp2').value.trim():''].filter(Boolean),
+    score:$('#f_score').value.trim(),result:$('#f_res').value,notes:$('#f_notes').value.trim()};
+  if(editing)db.matches[db.matches.findIndex(x=>x.id===editing.id)]=rec;else db.matches.push(rec);
+  save();dlg.close();render();
+};
+
+/* ---------- csv / json ---------- */
+function parseCSV(t){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()))rows.push(row);row=[]}
+    else f+=c}
+  row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows;
+}
+const csvCell=v=>/[",\n]/.test(v)?'"'+String(v).replace(/"/g,'""')+'"':v;
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+const CSV_HEAD='date,ranking,sport,type,partner,opponent1,opponent2,score,result,notes';
+function importCSV(text){
+  const rows=parseCSV(text);if(rows.length<2){alert('No rows found.');return}
+  const head=rows[0].map(h=>h.trim().toLowerCase());const col=n=>head.indexOf(n);
+  if(col('date')<0||col('opponent1')<0){alert('CSV needs at least "date" and "opponent1" columns.');return}
+  let n=0,bad=0;
+  rows.slice(1).forEach(r=>{
+    const g=k=>col(k)<0?'':(r[col(k)]||'').trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(g('date'))||!g('opponent1')){bad++;return}
+    const rname=g('ranking')||'Imported';let rk=db.rankings.find(x=>x.name.toLowerCase()===rname.toLowerCase());
+    if(!rk){rk={id:uid(),name:rname,sport:g('sport').toLowerCase()==='padel'?'padel':'tennis'};db.rankings.push(rk)}
+    const x=parseScore(g('score'));let res=g('result').toUpperCase().slice(0,1);
+    if(res!=='W'&&res!=='L')res=x.sw>=x.sl?'W':'L';
+    const type=g('type').toLowerCase()==='doubles'||g('partner')?'doubles':'singles';
+    db.matches.push({id:uid(),ts:Date.now()+n,date:g('date'),rankingId:rk.id,type,partner:g('partner'),opponents:[g('opponent1'),g('opponent2')].filter(Boolean),score:g('score'),result:res,notes:g('notes')});
+    n++;
+  });
+  save();render();alert(`Imported ${n} matches.`+(bad?` Skipped ${bad} rows (need date as YYYY-MM-DD and an opponent).`:''));
+}
+
+function importContacts(text){
+  const first=text.split(/\r?\n/)[0]||'';const delim=(first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?';':first.includes('\t')?'\t':',';
+  const rows=(delim===','?parseCSV(text):text.split(/\r?\n/).filter(l=>l.trim()).map(l=>l.split(delim).map(x=>x.replace(/^"|"$/g,''))));
+  if(rows.length<2){alert('No rows found.');return}
+  const head=rows[0].map(h=>plain(h));
+  const find=(...k)=>head.findIndex(h=>k.some(x=>h.includes(x)));
+  let iN=find('nombre y apellidos','name','nombre','jugador','player'),iS=find('apellido','surname','last'),iP=find('movil','mobile','telefono','tel','phone'),iE=find('email','correo','mail');
+  if(iN<0&&iS<0){alert('Could not find a name column. Headers seen: '+rows[0].join(', '));return}
+  const out=[];
+  rows.slice(1).forEach(r=>{
+    const g=i=>i<0?'':String(r[i]||'').trim();
+    let name=iS>=0&&iS!==iN?`${g(iN)} ${g(iS)}`.trim():g(iN);
+    if(name.includes(',')){const [a,b]=name.split(',');name=`${b.trim()} ${a.trim()}`}
+    const phone=g(iP),email=g(iE);
+    if(name&&(phone||email))out.push({name,phone,email});
+  });
+  const byName=new Map(contacts.map(c=>[plain(c.name),c]));
+  out.forEach(c=>byName.set(plain(c.name),{...byName.get(plain(c.name)),...c}));   // merge sources; newer import wins
+  contacts=[...byName.values()];saveContacts();render();alert(`Imported ${out.length} contacts (${contacts.length} stored in total).`);
+}
+
+/* ---------- sample data ---------- */
+function loadSample(){
+  if(db.matches.length&&!confirm('Add sample data to your existing data?'))return;
+  let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const names=['Anna Keller','Ben Fischer','Carlos Ruiz','Dana Weiss','Elias Brandt','Fiona Maier','Gabor Nagy','Hanna Roth','Ivo Novak','Jonas Huber'];
+  const r1={id:uid(),name:'Club Ladder',sport:'tennis'},r2={id:uid(),name:'Regional League',sport:'tennis'},r3={id:uid(),name:'Padel Americano Series',sport:'padel'};
+  db.rankings.push(r1,r2,r3);
+  const strength={};names.forEach(n=>strength[n]=.25+rnd()*.5);
+  const start=new Date();start.setMonth(start.getMonth()-14);
+  for(let i=0;i<70;i++){
+    const d=new Date(start.getTime()+i/70*(Date.now()-start.getTime()));
+    const r=[r1,r2,r3][Math.floor(rnd()*3)],dbl=r.sport==='padel'||rnd()<.25;
+    const o1=names[Math.floor(rnd()*names.length)];let o2=names[Math.floor(rnd()*names.length)];while(o2===o1)o2=names[Math.floor(rnd()*names.length)];
+    const p=names[Math.floor(rnd()*names.length)];
+    const win=rnd()>strength[o1]+(i/70)*.1;
+    const sets=[];let a=0,b=0;
+    while(a<2&&b<2){const w=win?rnd()<.75:rnd()<.25;const l=Math.floor(rnd()*5);if(w){a++;sets.push(l===4?'7-6':'6-'+l)}else{b++;sets.push(l===4?'6-7':l+'-6')}}
+    db.matches.push({id:uid(),ts:i,date:d.toISOString().slice(0,10),rankingId:r.id,type:dbl?'doubles':'singles',partner:dbl&&p!==o1&&p!==o2?p:'',
+      opponents:dbl?[o1,o2]:[o1],score:sets.join(' '),result:a>b?'W':'L',notes:''});
+  }
+  save();render();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const sp=e.target.closest('[data-sport]');if(sp){ui.sport=sp.dataset.sport;render();return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const act=b.dataset.act,id=b.dataset.id;
+  if(act==='add')openDialog();
+  else if(act==='edit')openDialog(db.matches.find(m=>m.id===id));
+  else if(act==='del'){if(confirm('Delete this match?')){db.matches=db.matches.filter(m=>m.id!==id);save();render()}}
+  else if(act==='rename'){const r=db.rankings.find(x=>x.id===id),n=prompt('Ranking name',r.name);if(n&&n.trim()){r.name=n.trim();save();render()}}
+  else if(act==='delrank'){const n=db.matches.filter(m=>m.rankingId===id).length;
+    if(confirm(`Delete this ranking and its ${n} matches?`)){db.rankings=db.rankings.filter(r=>r.id!==id);db.matches=db.matches.filter(m=>m.rankingId!==id);save();location.hash='#/rankings'}}
+  else if(act==='sample')loadSample();
+  else if(act==='clear'){if(confirm('Delete ALL rankings and matches from this browser?')){db={rankings:[],matches:[]};save();render()}}
+  else if(act==='exportjson')download('courtlog-backup-'+today()+'.json',JSON.stringify(db,null,1),'application/json');
+  else if(act==='exportcsv'){
+    const lines=desc(db.matches).map(m=>{const r=rankOf(m);return [m.date,r.name,r.sport,m.type,m.partner||'',m.opponents[0]||'',m.opponents[1]||'',m.score,m.result,m.notes||''].map(csvCell).join(',')});
+    download('courtlog-matches-'+today()+'.csv',[CSV_HEAD,...lines].join('\n'),'text/csv');
+  }
+  else if(act==='csvtemplate')download('courtlog-template.csv',CSV_HEAD+'\n2026-05-02,Club Ladder,tennis,singles,,Anna Keller,,6-4 3-6 10-8,W,Round 2\n2026-05-09,Padel Series,padel,doubles,Ben Fischer,Dana Weiss,Ivo Novak,4-6 6-3 6-2,W,\n','text/csv');
+  else if(act==='resync')loadSync();
+  else if(act==='clearcontacts'){if(confirm('Remove all stored contacts?')){contacts=[];saveContacts();render()}}
+  else if(act==='importjson'||act==='importcsv'||act==='importcontacts'){
+    const f=$('#file');f.accept=act==='importjson'?'.json':'.csv,text/csv,.txt';f.value='';
+    f.onchange=()=>{const file=f.files[0];if(!file)return;const rd=new FileReader();
+      rd.onload=()=>{
+        if(act==='importcsv'){importCSV(String(rd.result));return}
+        if(act==='importcontacts'){importContacts(String(rd.result));return}
+        try{const d=JSON.parse(rd.result);if(!d.rankings||!d.matches)throw 0;
+          if(confirm(`Replace current data with backup (${d.matches.length} matches)?`)){db=d;save();render()}}
+        catch(_){alert('That file is not a Court Log backup.')}};
+      rd.readAsText(file)};
+    f.click();
+  }
+});
+document.addEventListener('input',e=>{
+  const t=e.target.id;
+  if(t==='mq'){ui.mSearch=e.target.value;fillMatches()}
+  else if(t==='oq'){ui.oSearch=e.target.value;fillOpponents()}
+});
+document.addEventListener('change',e=>{
+  const t=e.target.id;
+  if(t==='mr'){ui.mRank=e.target.value;fillMatches()}
+  else if(t==='mres'){ui.mRes=e.target.value;fillMatches()}
+  else if(t==='os'){ui.oSort=e.target.value;fillOpponents()}
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id==='rkForm'){e.preventDefault();db.rankings.push({id:uid(),name:$('#rkn').value.trim(),sport:$('#rks').value});save();render()}
+});
+render();
+loadSync();
+</script>
+</body>
+</html>
