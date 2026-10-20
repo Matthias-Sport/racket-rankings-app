@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-20T06:58:36.358Z",
+ "generated": "2026-10-20T07:28:13.520Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -504,5 +504,103 @@
    "cuadro": 426
   }
  ],
+ "scouting": {
+  "manuel de castro zurita": {
+   "name": "Manuel de Castro Zurita",
+   "pos": 101,
+   "matches": [
+    {
+     "date": "2026-06-30",
+     "label": "Cuadro 424 · Serie 3",
+     "vs": "Leopoldo Fabra Cadenas",
+     "vsPos": 94,
+     "theirPos": 97,
+     "score": "6-4 (2-0) ret.",
+     "result": "W"
+    },
+    {
+     "date": "2026-06-16",
+     "label": "Cuadro 423 · Serie 1",
+     "vs": "Carlos Antón Muñoz",
+     "vsPos": 98,
+     "theirPos": 97,
+     "score": "3-6 6-0 10-5",
+     "result": "W"
+    },
+    {
+     "date": "2026-05-19",
+     "label": "Cuadro 421 · Serie 5",
+     "vs": "Javier Parreño Santa-Olalla",
+     "vsPos": 97,
+     "theirPos": 102,
+     "score": "1-6 7-5 10-8",
+     "result": "W"
+    },
+    {
+     "date": "2026-04-21",
+     "label": "Cuadro 419 · Serie 1",
+     "vs": "Elías Navas Martín",
+     "vsPos": 105,
+     "theirPos": 106,
+     "score": "6-3 6-3",
+     "result": "W"
+    },
+    {
+     "date": "2026-04-07",
+     "label": "Cuadro 418 · Serie 7",
+     "vs": "Carlos Antón Muñoz",
+     "vsPos": 106,
+     "theirPos": 113,
+     "score": "6-2 7-5",
+     "result": "W"
+    },
+    {
+     "date": "2026-03-17",
+     "label": "Cuadro 417 · Serie 5",
+     "vs": "Pedro Fernández-Amatriain",
+     "vsPos": 113,
+     "theirPos": 118,
+     "score": "6-3 6-0",
+     "result": "W"
+    },
+    {
+     "date": "2026-03-03",
+     "label": "Cuadro 416 · Serie 3",
+     "vs": "Javier Renedo Anglada",
+     "vsPos": 121,
+     "theirPos": 118,
+     "score": "6-4 7-5",
+     "result": "W"
+    },
+    {
+     "date": "2026-02-17",
+     "label": "Cuadro 415 · Serie 1",
+     "vs": "Angel Arbona Abascal",
+     "vsPos": 117,
+     "theirPos": 118,
+     "score": "ret.",
+     "result": "L"
+    },
+    {
+     "date": "2026-01-27",
+     "label": "Cuadro 414 · Serie 7",
+     "vs": "Luis Riesgo Pérez",
+     "vsPos": 125,
+     "theirPos": 118,
+     "score": "7-4",
+     "result": "W"
+    },
+    {
+     "date": "2025-12-23",
+     "label": "Cuadro 412 · Serie 3",
+     "vs": "Javier Renedo Anglada",
+     "vsPos": 118,
+     "theirPos": 121,
+     "score": "7-6 6-3",
+     "result": "W"
+    }
+   ]
+  }
+ },
  "groups": []
 }

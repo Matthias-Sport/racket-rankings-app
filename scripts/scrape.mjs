@@ -159,6 +159,7 @@ function cdcSet(score, iAmWinner) {
 }
 async function scrapeCDC() {
   const matches = [], upcoming = [], standings = [];
+  const scout = new Map();                                               // upcoming opponents -> their recent results (every cuadro lists everybody's matches)
   const start = await getText('https://rankingclubdecampo.es/cuadro-426/');
   const nums = [...start.matchAll(/\/cuadro-(\d+)\//g)].map(m => +m[1]);
   let lo = Math.min(...nums), hi = Math.max(...nums);
@@ -174,6 +175,14 @@ async function scrapeCDC() {
       .filter(c => c.length === 9 && /^contra/i.test(c[3]));
     const maxPos = Math.max(0, ...rows.flatMap(c => [+c[0], +c[4]]).filter(Number.isFinite));
     for (const c of rows) {
+      for (const [k, v] of scout) {                                          // collect the scouted opponent's results from this cuadro
+        const aIs = norm(`${c[2]} ${c[1]}`) === k, bIs = norm(`${c[6]} ${c[5]}`) === k;
+        if (!(aIs || bIs) || v.matches.length >= 10 || !c[7] || !c[8] || /no jugado/i.test(c[8])) continue;
+        if (isMe(`${c[2]} ${c[1]}`) || isMe(`${c[6]} ${c[5]}`)) continue;     // matches against you are in your own head-to-head
+        const [their, vs, vsName] = aIs ? [c[0], c[4], `${c[6]} ${c[5]}`] : [c[4], c[0], `${c[2]} ${c[1]}`];
+        const won = c[7] === their;
+        v.matches.push({ date: end, label, vs: vsName.replace(/\s+/g, ' ').trim(), vsPos: +vs || undefined, theirPos: +their || undefined, score: cdcSet(c[8], won), result: won ? 'W' : 'L' });
+      }
       const left = isMe(`${c[2]} ${c[1]}`), right = isMe(`${c[6]} ${c[5]}`);
       if (!left && !right) continue;
       const [myPos, oppPos, oS, oN] = left ? [c[0], c[4], c[5], c[6]] : [c[4], c[0], c[1], c[2]];
@@ -182,7 +191,7 @@ async function scrapeCDC() {
       const opp = `${oN} ${oS}`.replace(/\s+/g, ' ').trim();
       const winner = c[7], res = c[8];
       if (!winner && !res) {
-        if (n === hi || (end && end >= TODAY)) upcoming.push({ rankingId: 'cdc', opponent: opp, deadline: end, label, myPos: +myPos || undefined, oppPos: +oppPos || undefined });
+        if (n === hi || (end && end >= TODAY)) { upcoming.push({ rankingId: 'cdc', opponent: opp, deadline: end, label, myPos: +myPos || undefined, oppPos: +oppPos || undefined }); scout.set(norm(opp), { name: opp, pos: +oppPos || undefined, matches: [] }); }
         continue;
       }
       if (/no jugado/i.test(res) || !winner) continue;
@@ -193,7 +202,7 @@ async function scrapeCDC() {
       });
     }
   }
-  return { matches, upcoming, standings, cuadros: hi - lo + 1 };
+  return { matches, upcoming, standings, scouting: Object.fromEntries(scout), cuadros: hi - lo + 1 };
 }
 
 /* ---------- main ---------- */
@@ -215,6 +224,7 @@ const out = {
   matches,
   upcoming: [...ccvm.upcoming, ...cdc.upcoming],
   standings: cdc.standings,                                              // ladder position per ranking
+  scouting: cdc.scouting,                                                // recent results of your upcoming opponents (Club de Campo)
   groups: ccvm.groups,                                                   // your latest CCVM group, with the full table
 };
 const same = prev && JSON.stringify({ ...prev, generated: '' }) === JSON.stringify({ ...out, generated: '' });
