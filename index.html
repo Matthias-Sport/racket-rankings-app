@@ -164,7 +164,7 @@ function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.matche
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){alert('Could not save to browser storage.')}}
 
 /* ---------- synced data (data.json, written by scripts/scrape.mjs) ---------- */
-let sync={upcoming:[],generated:'',status:'not loaded'};
+let sync={upcoming:[],standings:[],groups:[],generated:'',status:'not loaded'};
 let contacts=(()=>{try{return JSON.parse(localStorage.getItem(KEY+'.contacts'))||[]}catch(e){return[]}})();
 const saveContacts=()=>{try{localStorage.setItem(KEY+'.contacts',JSON.stringify(contacts))}catch(e){alert('Could not save contacts.')}};
 async function loadSync(){
@@ -173,7 +173,7 @@ async function loadSync(){
     const d=await r.json();
     d.rankings.forEach(rk=>{const x=db.rankings.find(y=>y.id===rk.id);if(x){x.note=rk.note;x.sport=rk.sport;x.synced=true}else db.rankings.push({...rk,synced:true})});
     db.matches=db.matches.filter(m=>!m.ext).concat(d.matches.map(m=>({ts:Date.parse(m.date)||0,...m,id:m.ext})));
-    sync={upcoming:d.upcoming||[],generated:d.generated,status:'ok',player:d.player};
+    sync={upcoming:d.upcoming||[],standings:d.standings||[],groups:d.groups||[],generated:d.generated,status:'ok',player:d.player};
     save();
   }catch(e){sync.status='no data.json ('+e.message+')'}
   render();
@@ -296,6 +296,7 @@ function nextUp(){
     return `<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;padding:6px 0">
       <div><div style="font-size:17px;font-weight:600"><a href="#/opponents/${encodeURIComponent(u.opponent)}">${esc(u.opponent)}</a></div>
       <div class="mute small">${esc(u.label)}${u.deadline?` · play by <b>${esc(u.deadline)}</b>${days!==null?` (${days>=0?days+' days left':'overdue'})`:''}`:''}</div>
+      ${u.myPos||u.oppPos?`<div class="small" style="margin-top:4px">Ladder position: you <b>#${u.myPos||'?'}</b> · ${esc(u.opponent.split(' ')[0])} <b>#${u.oppPos||'?'}</b></div>`:''}
       <div class="small" style="margin-top:4px">${s.p?`Head-to-head <b>${rec(s)}</b>, last ${esc(desc(past)[0].date)}`:'First meeting'}</div></div>
       <div class="small" style="flex:1 1 220px">${contactBlock(u.opponent)}</div></div>`}).join('')+'</div>';
 }
@@ -303,6 +304,30 @@ function contactBlock(name){
   const c=findContact(name);
   if(!c)return `<span class="mute">No contact on file.${contacts.length?'':' <a href="#/data">Import your contact sheet</a>'}</span>`;
   return `${c.phone?`<div class="cbtn"><a class="btn" href="tel:${esc(c.phone.replace(/[^\d+]/g,''))}">📞 ${esc(c.phone)}</a><a class="btn" href="${waLink(c.phone)}" target="_blank" rel="noopener">💬 WhatsApp</a></div>`:''}${c.email?`<div><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></div>`:''}`;
+}
+const ord=n=>n+([,'st','nd','rd'][n%100>>3^1&&n%10]||'th');
+const fmtD=d=>d?d.slice(8,10)+'/'+d.slice(5,7):'';
+function standingBlock(rankingId){
+  const st=sync.standings.find(x=>x.rankingId===rankingId),g=sync.groups.find(x=>x.rankingId===rankingId);
+  let h='';
+  if(st)h+=`<div style="font-size:22px;font-weight:700">#${st.pos}<span class="mute small" style="font-weight:400"> of ${st.of} on the ladder · ${esc(st.label)}</span></div>`;
+  if(g){
+    const me=g.players.find(p=>p.me);
+    h+=`<div style="font-size:18px;font-weight:700">${esc(g.name)}${me&&me.pos?` · ${ord(me.pos)} of ${g.players.length}`:''}<span class="mute small" style="font-weight:400"> · Fase ${g.phase}, ${g.current?'in progress':'finished'} (${fmtD(g.start)}–${fmtD(g.end)})</span></div>`;
+    if(g.overall)h+=`<div class="small mute">Overall across all groups: #${g.overall.pos} of ${g.overall.of}</div>`;
+    if(!g.current)h+=`<div class="small mute" style="margin-top:4px">You are not in the current phase. Your new group appears here after the next sync once you are signed up.</div>`;
+  }
+  return h;
+}
+function groupTable(g){
+  return `<div class="tw"><table><thead><tr><th class="n">#</th><th>Player</th><th class="n">P</th><th class="n">W–L</th><th class="n hide-s">Sets</th><th class="n hide-s">Games</th><th class="n">Pts</th></tr></thead><tbody>`+
+    g.players.map(p=>`<tr${p.me?' style="background:var(--soft);font-weight:700"':''}><td class="n">${p.pos||'–'}</td><td><a href="#/opponents/${encodeURIComponent(p.name)}">${esc(p.name)}</a>${p.me?' <span class="tag">you</span>':''}</td>
+    <td class="n">${p.pj}</td><td class="n">${p.pg}–${p.pp}</td><td class="n hide-s">${p.sg}–${p.sp}</td><td class="n hide-s">${p.jg}–${p.jp}</td><td class="n">${p.pts}</td></tr>`).join('')+'</tbody></table></div>';
+}
+function standingsCard(){
+  const items=db.rankings.filter(r=>ui.sport==='all'||r.sport===ui.sport).map(r=>({r,b:standingBlock(r.id)})).filter(x=>x.b);
+  if(!items.length)return '';
+  return `<div class="card"><h2>Where you stand</h2>`+items.map(({r,b})=>`<div style="padding:6px 0"><div class="small" style="margin-bottom:2px"><a href="#/rankings/${r.id}"><b>${esc(r.name)}</b></a></div>${b}</div>`).join('')+'</div>';
 }
 function posChart(ms){
   const a=asc(ms.filter(m=>m.pos));if(a.length<2)return '';
@@ -336,7 +361,7 @@ function pageDashboard(){
   const nemesis=opps.filter(o=>o.st.l>o.st.w).sort((a,b)=>(b.st.l-b.st.w)-(a.st.l-a.st.w));
   const faves=opps.filter(o=>o.st.w>o.st.l).sort((a,b)=>(b.st.w-b.st.l)-(a.st.w-a.st.l));
   const rks=db.rankings.filter(r=>ui.sport==='all'||r.sport===ui.sport).map(r=>({r,ms:ms.filter(m=>m.rankingId===r.id)})).filter(x=>x.ms.length);
-  return `<h1>Overview</h1>${nextUp()}${tiles(s,ms)}
+  return `<h1>Overview</h1>${nextUp()}${standingsCard()}${tiles(s,ms)}
   <div class="card"><h2>Recent form</h2>${chips(ms,15)}</div>
   <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>
   <div class="card"><h2>By ranking</h2><div class="tw"><table><thead><tr><th>Ranking</th><th class="n">P</th><th class="n">W–L</th><th class="n">Win %</th><th>Form</th></tr></thead><tbody>
@@ -402,6 +427,7 @@ function pageRanking(id){
   const rivals=[...opps].sort((a,b)=>b.st.p-a.st.p);
   return `<p class="small"><a href="#/rankings">← Rankings</a></p>
   <h1>${esc(r.name)} <span class="tag">${r.sport}</span> ${r.synced?'':`<button class="sm" data-act="rename" data-id="${id}">Rename</button> <button class="sm danger" data-act="delrank" data-id="${id}">Delete</button>`}</h1>
+  ${standingBlock(id)?`<div class="card"><h2>Standing</h2>${standingBlock(id)}${(sync.groups.find(x=>x.rankingId===id)||{players:[]}).players.length?'<div style="margin-top:10px">'+groupTable(sync.groups.find(x=>x.rankingId===id))+'</div>':''}</div>`:''}
   ${r.note?`<p class="mute small">${esc(r.note)}</p>`:''}
   ${ms.length?tiles(s,ms)+`<div class="card"><h2>Recent form</h2>${chips(ms,15)}<p class="mute small" style="margin:8px 0 0">Singles ${rec(sing)} · Doubles ${rec(dbl)}</p></div>
   <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>

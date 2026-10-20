@@ -3,6 +3,8 @@
 //   node scripts/scrape.mjs                       (uses the default name)
 //   node scripts/scrape.mjs --name "Jane Doe"
 // Only match data goes into data.json. Phone numbers and emails of other players are never stored there.
+//   --full       rescan every CCVM phase back to the start (the default only rescans the latest 8 and keeps older results
+//                from data.json, which is much lighter on the club's server).
 //   --contacts   also writes ../Racket-Rankings-private/contacts-ccvm.local.csv with the phone/email of the players in YOUR current CCVM
 //                group(s) (the details the club shows to group members). That folder sits OUTSIDE the project so it can never be uploaded by accident; import it
 //                on the Data page. Use --contacts-since YYYY-MM-DD to include groups that ended after that date.
@@ -16,6 +18,8 @@ const opt = (k, d) => { const i = args.indexOf('--' + k); return i < 0 ? d : (ar
 const NAME = opt('name', 'Matthias Homan');
 const TODAY = new Date().toISOString().slice(0, 10);
 const WANT_CONTACTS = args.includes('--contacts');
+const FULL = args.includes('--full');
+const RECENT_PHASES = 8;
 const CONTACTS_SINCE = opt('contacts-since', TODAY);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -60,12 +64,14 @@ function ccvmSets(p, mineIsFirst) {
   }
   return sets.join(' ');
 }
-async function scrapeCCVM() {
+async function scrapeCCVM(prevMatches = []) {
   const matches = [], upcoming = [], contacts = new Map();
+  let lastGroup = null;                                                  // standings of your most recent group (phases are scanned newest first)
   let phases = 0;
   let top = 270;                                                         // then probe upwards for newer phases
   while (((await ccvmApi({ codigo: top + 1, accion: 'recuperarGrupos' })).data || []).length) top++;
-  for (let fase = top; fase >= 1; fase--) {
+  const floor = FULL || !prevMatches.length ? 1 : Math.max(1, top - RECENT_PHASES);
+  for (let fase = top; fase >= floor; fase--) {
     const groups = (await ccvmApi({ codigo: fase, accion: 'recuperarGrupos' })).data || [];
     await sleep(100);
     if (!groups.length || groups[0].codigoRanking !== 49) continue;     // 49 = the adult ranking
@@ -76,6 +82,20 @@ async function scrapeCCVM() {
       const d = await ccvmApi({ codigo: g.codigo, accion: 'recuperarGrupo' });
       await sleep(100);
       const label = `Fase ${fase} · ${g.nombreGrupo}`;
+      if (!lastGroup) {
+        const players = (d.grupo?.jugadores || []).map(j => ({
+          name: tidy(j.nombreCuadro), pos: j.posicion || 0, pts: j.puntos || 0, pj: j.PJ || 0, pg: j.PG || 0, pp: j.PP || 0,
+          sg: j.SG || 0, sp: j.SP || 0, jg: j.JG || 0, jp: j.JP || 0, me: j.codigo === me.codigo,
+        })).sort((a, b) => (a.pos || 99) - (b.pos || 99));
+        const numbered = /^grupo \d+$/i.test(g.nombreGrupo || '');
+        const above = groups.filter(x => x.orden < g.orden).reduce((n, x) => n + (x.jugadores || []).length, 0);
+        const myPos = players.find(x => x.me)?.pos || 0;
+        lastGroup = {
+          rankingId: 'ccvm', phase: fase, name: g.nombreGrupo, start: iso(g.fechaInicio), end: iso(g.fechaFin),
+          current: iso(g.fechaFin) >= TODAY, players,
+          overall: numbered && myPos ? { pos: above + myPos, of: groups.reduce((n, x) => n + (x.jugadores || []).length, 0) } : undefined,
+        };
+      }
       if (WANT_CONTACTS && iso(g.fechaFin) >= CONTACTS_SINCE) {
         for (const p of d.partidos || []) for (const side of [p.jugador, p.contrario]) {
           const c = side?.datos?.[0];
@@ -100,13 +120,15 @@ async function scrapeCCVM() {
         if (p.wo || p.woContrario) score = score ? score + ' W.O.' : 'W.O.';
         if (p.abandono || p.abandonoContrario) score += ' ret.';
         matches.push({
-          ext: `ccvm:${p.codigo}`, date: iso(p.fecha) || iso(g.fechaFin), rankingId: 'ccvm', type: 'singles', partner: '',
+          ext: `ccvm:${p.codigo}`, phase: fase, date: iso(p.fecha) || iso(g.fechaFin), rankingId: 'ccvm', type: 'singles', partner: '',
           opponents: [oppName], score: score.trim(), result: won ? 'W' : 'L', notes: `${label} · Jornada ${p.jornada}`,
         });
       }
     }
   }
-  return { matches, upcoming, phases, contacts: [...contacts.values()] };
+  const phaseOf = m => m.phase ?? +((m.notes || '').match(/Fase (\d+)/) || [])[1];
+  const older = prevMatches.filter(m => phaseOf(m) < floor).map(m => ({ ...m, phase: phaseOf(m) }));
+  return { matches: [...older, ...matches], upcoming, phases, contacts: [...contacts.values()], groups: lastGroup ? [lastGroup] : null };
 }
 
 /* ---------- Ranking Club de Campo (rankingclubdecampo.es) ---------- */
@@ -136,7 +158,7 @@ function cdcSet(score, iAmWinner) {
   return (out.join(' ') + (retired ? ' ret.' : '')).trim();
 }
 async function scrapeCDC() {
-  const matches = [], upcoming = [];
+  const matches = [], upcoming = [], standings = [];
   const start = await getText('https://rankingclubdecampo.es/cuadro-426/');
   const nums = [...start.matchAll(/\/cuadro-(\d+)\//g)].map(m => +m[1]);
   let lo = Math.min(...nums), hi = Math.max(...nums);
@@ -148,17 +170,19 @@ async function scrapeCDC() {
     const end = cdcWindowEnd(html);
     const serie = (cellText(html).match(/Serie \d+/) || [''])[0];
     const label = `Cuadro ${n}${serie ? ' · ' + serie : ''}`;
-    for (const tr of html.match(/<tr[\s\S]*?<\/tr>/g) || []) {
-      const c = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(m => cellText(m[1]));
-      if (c.length !== 9 || !/^contra/i.test(c[3])) continue;
+    const rows = (html.match(/<tr[\s\S]*?<\/tr>/g) || []).map(tr => [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(m => cellText(m[1])))
+      .filter(c => c.length === 9 && /^contra/i.test(c[3]));
+    const maxPos = Math.max(0, ...rows.flatMap(c => [+c[0], +c[4]]).filter(Number.isFinite));
+    for (const c of rows) {
       const left = isMe(`${c[2]} ${c[1]}`), right = isMe(`${c[6]} ${c[5]}`);
       if (!left && !right) continue;
       const [myPos, oppPos, oS, oN] = left ? [c[0], c[4], c[5], c[6]] : [c[4], c[0], c[1], c[2]];
       if (/sin contrario/i.test(oS)) continue;                               // bye
+      if (!standings.length && +myPos) standings.push({ rankingId: 'cdc', kind: 'ladder', label, pos: +myPos, of: maxPos, cuadro: n });   // newest cuadro you appear in
       const opp = `${oN} ${oS}`.replace(/\s+/g, ' ').trim();
       const winner = c[7], res = c[8];
       if (!winner && !res) {
-        if (n === hi || (end && end >= TODAY)) upcoming.push({ rankingId: 'cdc', opponent: opp, deadline: end, label, oppPos: +oppPos || undefined });
+        if (n === hi || (end && end >= TODAY)) upcoming.push({ rankingId: 'cdc', opponent: opp, deadline: end, label, myPos: +myPos || undefined, oppPos: +oppPos || undefined });
         continue;
       }
       if (/no jugado/i.test(res) || !winner) continue;
@@ -169,21 +193,30 @@ async function scrapeCDC() {
       });
     }
   }
-  return { matches, upcoming, cuadros: hi - lo + 1 };
+  return { matches, upcoming, standings, cuadros: hi - lo + 1 };
 }
 
 /* ---------- main ---------- */
 console.log(`Syncing results for "${NAME}"…`);
-const [ccvm, cdc] = await Promise.all([scrapeCCVM(), scrapeCDC()]);
+const file = resolve(ROOT, 'data.json');
+const prev = await readFile(file, 'utf8').then(JSON.parse, () => null);
+let ccvm;
+try { ccvm = await scrapeCCVM((prev?.matches || []).filter(m => m.rankingId === 'ccvm')); if (!ccvm.groups) ccvm.groups = prev?.groups || []; }
+catch (e) {                                                              // site down or blocking: keep what we had instead of losing it
+  console.warn(`CCVM site unavailable (${e.message}); keeping the previous CCVM data.`);
+  ccvm = { matches: (prev?.matches || []).filter(m => m.rankingId === 'ccvm'), upcoming: (prev?.upcoming || []).filter(u => u.rankingId === 'ccvm'),
+           groups: prev?.groups || [], contacts: [], phases: 0 };
+}
+const cdc = await scrapeCDC();
 const matches = [...ccvm.matches, ...cdc.matches].sort((a, b) => (a.date + a.ext).localeCompare(b.date + b.ext));
 const out = {
   generated: new Date().toISOString(), player: NAME,
   rankings: [CCVM, CDC],
   matches,
   upcoming: [...ccvm.upcoming, ...cdc.upcoming],
+  standings: cdc.standings,                                              // ladder position per ranking
+  groups: ccvm.groups,                                                   // your latest CCVM group, with the full table
 };
-const file = resolve(ROOT, 'data.json');
-const prev = await readFile(file, 'utf8').then(JSON.parse, () => null);
 const same = prev && JSON.stringify({ ...prev, generated: '' }) === JSON.stringify({ ...out, generated: '' });
 if (!same) await writeFile(file, JSON.stringify(out, null, 1) + '\n');     // keep the file (and git history) quiet when nothing changed
 if (WANT_CONTACTS) {

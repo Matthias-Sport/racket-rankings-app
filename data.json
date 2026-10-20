@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-19T15:44:43.403Z",
+ "generated": "2026-10-20T06:58:36.358Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -490,7 +490,19 @@
    "opponent": "Manuel de Castro Zurita",
    "deadline": "2026-10-27",
    "label": "Cuadro 426 · Serie 3",
+   "myPos": 98,
    "oppPos": 101
   }
- ]
+ ],
+ "standings": [
+  {
+   "rankingId": "cdc",
+   "kind": "ladder",
+   "label": "Cuadro 426 · Serie 3",
+   "pos": 98,
+   "of": 216,
+   "cuadro": 426
+  }
+ ],
+ "groups": []
 }
