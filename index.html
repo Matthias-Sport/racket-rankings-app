@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<title>Court Log</title>
+<title>Racket Rankings</title>
 <style>
 :root{
   --bg:#f5f6f3;--card:#fff;--ink:#1a2220;--mute:#65706b;--line:#e2e5e0;
@@ -55,6 +55,17 @@ th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertic
 th{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 [hidden]{display:none!important}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:8px 0 2px}
+.seg button{border:0;border-radius:0;background:var(--bg);min-height:44px;font-weight:600;color:var(--mute)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.seg.res{margin-top:10px}.seg.res button[data-v=W].on{background:var(--win);color:#fff}.seg.res button[data-v=L].on{background:var(--loss);color:#fff}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+#toast.on{opacity:1}
+dialog #saveMore{min-height:40px}
+.dact{margin:16px 0 0;justify-content:flex-end}
+@media(max-width:560px){.dact{flex-direction:column-reverse;align-items:stretch}.dact button{width:100%;min-height:46px}}
+@media(max-width:400px){.brand{font-size:15px}.pills button{padding:3px 9px}.pills{gap:3px}}
 .mrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
 .mrow:last-child{border-bottom:0}
 .mrow .chip{margin-top:2px;flex:none}
@@ -102,7 +113,7 @@ label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
 </head>
 <body>
 <header><div class="bar">
-  <span class="brand">🎾 Court Log</span>
+  <span class="brand">🎾 Racket Rankings</span>
   <nav id="nav"></nav>
   <div class="pills" id="sportPills"></div>
   <button class="pri" data-act="add">+ Match</button>
@@ -111,32 +122,32 @@ label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
 
 <dialog id="dlg"><form id="mf">
   <h2 id="dlgTitle">Add match</h2>
+  <select id="f_type" hidden><option value="singles">Singles</option><option value="doubles">Doubles</option></select>
+  <select id="f_res" hidden><option value="W">Win</option><option value="L">Loss</option></select>
+  <div class="seg" data-for="f_type"><button type="button" data-v="singles">Singles</button><button type="button" data-v="doubles">Doubles</button></div>
+  <div id="partnerBox"><label>Your partner</label><input id="f_partner" list="dl_names" autocomplete="off"></div>
+  <div class="two">
+    <div><label id="oppLabel">Opponent</label><input id="f_opp1" list="dl_names" autocomplete="off" required></div>
+    <div id="opp2Box"><label>Opponent 2</label><input id="f_opp2" list="dl_names" autocomplete="off"></div>
+  </div>
+  <label>Score, your games first (e.g. 6-4 3-6 10-8)</label>
+  <input id="f_score" placeholder="6-4 3-6 10-8" autocomplete="off">
+  <div class="seg res" data-for="f_res"><button type="button" data-v="W">Win</button><button type="button" data-v="L">Loss</button></div>
   <div class="two">
     <div><label>Date</label><input type="date" id="f_date" required></div>
     <div><label>Ranking / competition</label><select id="f_rank"></select></div>
   </div>
   <div id="newRk" class="two" hidden>
-    <div><label>New ranking name</label><input id="f_rkname" placeholder="e.g. Club ladder 2026"></div>
+    <div><label>New ranking name</label><input id="f_rkname" placeholder="e.g. Apostol Santiago ladder"></div>
     <div><label>Sport</label><select id="f_rksport"><option value="tennis">Tennis</option><option value="padel">Padel</option></select></div>
-  </div>
-  <div class="two">
-    <div><label>Format</label><select id="f_type"><option value="singles">Singles</option><option value="doubles">Doubles</option></select></div>
-    <div id="partnerBox"><label>Partner</label><input id="f_partner" list="dl_names" autocomplete="off"></div>
-  </div>
-  <div class="two">
-    <div><label id="oppLabel">Opponent</label><input id="f_opp1" list="dl_names" autocomplete="off" required></div>
-    <div id="opp2Box"><label>Opponent 2</label><input id="f_opp2" list="dl_names" autocomplete="off"></div>
-  </div>
-  <div class="two">
-    <div><label>Score (your games first, e.g. 6-4 3-6 10-8)</label><input id="f_score" placeholder="6-4 3-6 10-8" autocomplete="off"></div>
-    <div><label>Result</label><select id="f_res"><option value="W">Win</option><option value="L">Loss</option></select></div>
   </div>
   <label>Round / venue / notes</label><input id="f_notes" autocomplete="off">
   <datalist id="dl_names"></datalist>
-  <div class="row" style="margin:16px 0 0;justify-content:flex-end">
-    <button type="button" id="cancel">Cancel</button><button class="pri" type="submit">Save</button>
+  <div class="row dact">
+    <button type="button" id="cancel">Cancel</button><button type="submit" id="saveMore">Save + add another</button><button class="pri" type="submit" id="saveBtn">Save</button>
   </div>
 </form></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const KEY='courtlog.v1';
@@ -407,6 +418,9 @@ function pageData(){
   <button data-act="resync">Reload data.json</button></div>
   <div class="card"><h2>Contacts</h2>
   <p class="mute small">Stored in this browser only (never uploaded). Imports add to what is stored (existing people are updated), so you can bring in the club PDF list and the CCVM group list one after the other. Use a CSV with a name column plus phone and/or email (headers like name, nombre, teléfono, móvil, email). Names can be “Surname, Name” or “Name Surname”.</p>
+  <label for="pasteC">Or paste contacts (one per line, e.g. “Manuel de Castro Zurita 655 954 772”)</label>
+  <textarea id="pasteC" rows="4" placeholder="Name 600 111 222&#10;Surname, Name, 600111222, name@mail.com"></textarea>
+  <div class="row" style="margin-top:8px"><button class="pri" data-act="pastecontacts">Add pasted contacts</button></div>
   <div class="row"><button data-act="importcontacts">Import contacts CSV…</button><span class="small mute">${contacts.length} contacts stored</span>${contacts.length?'<button class="danger sm" data-act="clearcontacts">Remove all</button>':''}</div></div>
   <div class="card"><h2>Backup</h2><p class="mute small">Everything is stored in this browser only. Export a backup regularly, and use it to move data between devices.</p>
   <div class="row"><button data-act="exportjson">Export backup (JSON)</button><button data-act="exportcsv">Export matches (CSV)</button>
@@ -443,44 +457,72 @@ function refreshNames(){
   const set=new Set();db.matches.forEach(m=>[m.partner,...(m.opponents||[])].forEach(n=>n&&set.add(n.trim())));
   $('#dl_names').innerHTML=[...set].sort().map(n=>`<option value="${esc(n)}">`).join('');
 }
+function formSport(){
+  const v=$('#f_rank').value;
+  if(v==='__new')return $('#f_rksport').value;
+  if(v==='friendly-padel')return 'padel';
+  if(v==='friendly-tennis')return 'tennis';
+  return (db.rankings.find(r=>r.id===v)||{}).sport||'tennis';
+}
 function syncForm(){
   const d=$('#f_type').value==='doubles';
   $('#partnerBox').hidden=!d;$('#opp2Box').hidden=!d;$('#oppLabel').textContent=d?'Opponent 1':'Opponent';
   $('#newRk').hidden=$('#f_rank').value!=='__new';
+  document.querySelectorAll('.seg').forEach(g=>{const v=$('#'+g.dataset.for).value;g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))});
 }
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1800)}
 function openDialog(m){
   editing=m||null;
   $('#dlgTitle').textContent=m?'Edit match':'Add match';
-  const last=desc(db.matches)[0];
-  $('#f_rank').innerHTML=db.rankings.map(r=>`<option value="${r.id}">${esc(r.name)} (${r.sport})</option>`).join('')+'<option value="__new">+ New ranking…</option>';
+  $('#saveMore').hidden=!!m;
+  const manual=desc(db.matches.filter(x=>!x.ext))[0]||desc(db.matches)[0];   // defaults follow your last hand-entered match
+  const friendly=[['friendly-tennis','tennis'],['friendly-padel','padel']].filter(f=>!db.rankings.some(r=>r.id===f[0]));
+  $('#f_rank').innerHTML=db.rankings.map(r=>`<option value="${r.id}">${esc(r.name)} (${r.sport})</option>`).join('')
+    +friendly.map(f=>`<option value="${f[0]}">Friendly / other, no ranking (${f[1]})</option>`).join('')+'<option value="__new">+ New ranking…</option>';
   const hashR=location.hash.match(/rankings\/(\w+)/);
   $('#f_date').value=m?m.date:today();
-  $('#f_rank').value=m?m.rankingId:(hashR?hashR[1]:(last?last.rankingId:'__new'));
+  $('#f_rank').value=m?m.rankingId:(hashR?hashR[1]:(manual?manual.rankingId:'__new'));
   if(!$('#f_rank').value)$('#f_rank').value='__new';
-  $('#f_type').value=m?m.type:(last?last.type:'singles');
-  $('#f_partner').value=m?.partner||'';
+  $('#f_type').value=m?m.type:(manual?manual.type:'singles');
+  $('#f_partner').value=m?m.partner||'':(manual&&manual.type==='doubles'&&manual.rankingId===$('#f_rank').value?manual.partner||'':'');
   $('#f_opp1').value=m?.opponents?.[0]||'';$('#f_opp2').value=m?.opponents?.[1]||'';
   $('#f_score').value=m?.score||'';$('#f_res').value=m?.result||'W';$('#f_notes').value=m?.notes||'';
   $('#f_rkname').value='';
   syncForm();dlg.showModal();$('#f_opp1').focus();
 }
-$('#f_type').onchange=syncForm;$('#f_rank').onchange=syncForm;
-$('#f_score').oninput=()=>{const x=parseScore($('#f_score').value);if(x.sw>x.sl)$('#f_res').value='W';else if(x.sl>x.sw)$('#f_res').value='L'};
+$('#f_type').onchange=syncForm;
+$('#f_rank').onchange=()=>{if(formSport()==='padel')$('#f_type').value='doubles';syncForm()};
+$('#f_rksport').onchange=()=>{if($('#f_rank').value==='__new'&&formSport()==='padel')$('#f_type').value='doubles';syncForm()};
+$('#f_score').oninput=()=>{const x=parseScore($('#f_score').value);if(x.sw>x.sl)$('#f_res').value='W';else if(x.sl>x.sw)$('#f_res').value='L';syncForm()};
+dlg.addEventListener('click',e=>{const b=e.target.closest('.seg button');if(!b)return;
+  $('#'+b.parentElement.dataset.for).value=b.dataset.v;syncForm()});
 $('#cancel').onclick=()=>dlg.close();
 $('#mf').onsubmit=e=>{
   e.preventDefault();
+  const more=e.submitter&&e.submitter.id==='saveMore';
   let rid=$('#f_rank').value;
   if(rid==='__new'){
     const n=$('#f_rkname').value.trim();if(!n){alert('Please name the new ranking.');return}
     rid=uid();db.rankings.push({id:rid,name:n,sport:$('#f_rksport').value});
+  }else if(rid.startsWith('friendly-')&&!db.rankings.some(r=>r.id===rid)){
+    db.rankings.push({id:rid,name:'Friendlies & other',sport:rid.endsWith('padel')?'padel':'tennis'});
   }
   const dbl=$('#f_type').value==='doubles';
   const rec={id:editing?editing.id:uid(),ts:editing?editing.ts:Date.now(),date:$('#f_date').value,rankingId:rid,type:$('#f_type').value,
     partner:dbl?$('#f_partner').value.trim():'',opponents:[$('#f_opp1').value.trim(),dbl?$('#f_opp2').value.trim():''].filter(Boolean),
     score:$('#f_score').value.trim(),result:$('#f_res').value,notes:$('#f_notes').value.trim()};
   if(editing)db.matches[db.matches.findIndex(x=>x.id===editing.id)]=rec;else db.matches.push(rec);
-  save();dlg.close();render();
+  save();
+  if(more&&!editing){
+    render();toast('Saved ✓ add the next one');
+    openDialogKeep(rid,rec);
+  }else{dlg.close();render();toast('Saved ✓')}
 };
+function openDialogKeep(rid,rec){
+  dlg.close();openDialog();
+  $('#f_rank').value=rid;$('#f_type').value=rec.type;$('#f_partner').value=rec.partner;$('#f_date').value=rec.date;syncForm();$('#f_opp1').focus();
+}
 
 /* ---------- csv / json ---------- */
 function parseCSV(t){
@@ -530,9 +572,28 @@ function importContacts(text){
     const phone=g(iP),email=g(iE);
     if(name&&(phone||email))out.push({name,phone,email});
   });
+  mergeContacts(out);
+}
+function mergeContacts(out){
   const byName=new Map(contacts.map(c=>[plain(c.name),c]));
   out.forEach(c=>byName.set(plain(c.name),{...byName.get(plain(c.name)),...c}));   // merge sources; newer import wins
-  contacts=[...byName.values()];saveContacts();render();alert(`Imported ${out.length} contacts (${contacts.length} stored in total).`);
+  contacts=[...byName.values()];saveContacts();render();alert(`Added ${out.length} contacts (${contacts.length} stored in total).`);
+}
+function importPasted(text){
+  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){alert('Paste some contacts first.');return}
+  if(/(nombre|name|apellid)/i.test(lines[0])&&/[,;\t]/.test(lines[0])){importContacts(text);return}   // pasted a CSV with a header row
+  const out=[];
+  lines.forEach(l=>{
+    const email=(l.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/)||[''])[0];
+    const phone=(l.match(/\+?\d[\d\s().-]{7,}\d/)||[''])[0].replace(/[^\d+]/g,'');
+    let name=l.replace(email,' ').replace(/\+?\d[\d\s().-]{7,}\d/,' ').replace(/[;\t|]+/g,' ').replace(/\s+/g,' ').replace(/^[\s,.-]+|[\s,.-]+$/g,'');
+    if((name.match(/,/g)||[]).length===1){const [a,b]=name.split(',');name=`${b.trim()} ${a.trim()}`}   // "Surname, Name"
+    name=name.replace(/,/g,' ').replace(/\s+/g,' ').trim();
+    if(name&&(phone||email))out.push({name,phone,email});
+  });
+  if(!out.length){alert('Could not find a name plus a phone number or email on any line.');return}
+  $('#pasteC').value='';mergeContacts(out);
 }
 
 /* ---------- sample data ---------- */
@@ -578,6 +639,7 @@ document.addEventListener('click',e=>{
   }
   else if(act==='csvtemplate')download('courtlog-template.csv',CSV_HEAD+'\n2026-05-02,Club Ladder,tennis,singles,,Anna Keller,,6-4 3-6 10-8,W,Round 2\n2026-05-09,Padel Series,padel,doubles,Ben Fischer,Dana Weiss,Ivo Novak,4-6 6-3 6-2,W,\n','text/csv');
   else if(act==='resync')loadSync();
+  else if(act==='pastecontacts')importPasted($('#pasteC').value);
   else if(act==='clearcontacts'){if(confirm('Remove all stored contacts?')){contacts=[];saveContacts();render()}}
   else if(act==='importjson'||act==='importcsv'||act==='importcontacts'){
     const f=$('#file');f.accept=act==='importjson'?'.json':'.csv,text/csv,.txt';f.value='';
@@ -587,7 +649,7 @@ document.addEventListener('click',e=>{
         if(act==='importcontacts'){importContacts(String(rd.result));return}
         try{const d=JSON.parse(rd.result);if(!d.rankings||!d.matches)throw 0;
           if(confirm(`Replace current data with backup (${d.matches.length} matches)?`)){db=d;save();render()}}
-        catch(_){alert('That file is not a Court Log backup.')}};
+        catch(_){alert('That file is not a Racket Rankings backup.')}};
       rd.readAsText(file)};
     f.click();
   }

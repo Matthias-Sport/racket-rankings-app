@@ -1,4 +1,4 @@
-# Court Log
+# Racket Rankings
 
 Personal tennis/padel results tracker. One static page (`index.html`), no build step.
 

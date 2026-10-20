@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Pulls your results from the public ranking sites and writes data.json for Court Log.
+// Pulls your results from the public ranking sites and writes data.json for Racket Rankings.
 //   node scripts/scrape.mjs                       (uses the default name)
 //   node scripts/scrape.mjs --name "Jane Doe"
 // Only match data goes into data.json. Phone numbers and emails of other players are never stored there.
@@ -29,7 +29,7 @@ const flip = sc => sc.split(' ').map(t => { const m = t.match(/^(\(?)(\d+)[/-](\
 async function getText(url, tries = 3) {
   for (let i = 0; i < tries; i++) {
     try {
-      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (court-log personal results sync)' } });
+      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (racket-rankings personal results sync)' } });
       if (r.status === 404) return null;
       if (r.ok) return await r.text();
     } catch (e) { /* retry */ }
