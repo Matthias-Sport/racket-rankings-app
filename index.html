@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1f6f5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rankings">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Court Log</title>
 <style>
 :root{
@@ -16,11 +24,13 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+html{-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
 .bar{max-width:1040px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .brand{font-weight:700;font-size:17px;margin-right:6px}
 nav{display:flex;gap:2px;flex:1;overflow-x:auto}
-nav a{padding:6px 11px;border-radius:8px;color:var(--mute);white-space:nowrap}
+nav a{padding:6px 11px;border-radius:8px;color:var(--mute);white-space:nowrap;display:flex;align-items:center;gap:6px}
+nav svg{display:none;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav a.on{background:var(--soft);color:var(--ink);font-weight:600;text-decoration:none}
 main{max-width:1040px;margin:0 auto;padding:18px 16px 60px}
 h1{font-size:22px;margin:4px 0 14px}h2{font-size:15px;margin:0 0 10px}
@@ -43,7 +53,17 @@ input,select,textarea{background:var(--bg);border:1px solid var(--line);border-r
 table{width:100%;border-collapse:collapse}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+[hidden]{display:none!important}
+.mrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mrow .chip{margin-top:2px;flex:none}
+.mmain{flex:1;min-width:0}.mopp{font-weight:600;overflow-wrap:anywhere}
+.mscore{flex:none;text-align:right;max-width:34%;font-variant-numeric:tabular-nums;font-size:14px}
+.macts{flex:none;display:flex;gap:6px}
+@media(max-width:560px){.macts{flex-direction:column}}
+.cbtn{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;min-height:40px;border:1px solid var(--line);border-radius:10px;padding:6px 12px;background:var(--soft);color:var(--ink)}.btn:hover{text-decoration:none}
 tr:last-child td{border-bottom:0}
 .tw{overflow-x:auto}
 .chip{display:inline-block;min-width:22px;text-align:center;border-radius:6px;font-size:12px;font-weight:700;padding:1px 5px;color:#fff}
@@ -57,9 +77,27 @@ dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);co
 dialog::backdrop{background:rgba(0,0,0,.4)}
 label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.legend{display:flex;gap:12px;font-size:12px;color:var(--mute);margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mute);margin-top:4px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
 @media(max-width:560px){.two{grid-template-columns:1fr}.hide-s{display:none}}
+/* phones: slim header, bottom tab bar, floating add button, bigger tap targets, no iOS focus-zoom */
+@media(max-width:720px){
+  .bar{flex-wrap:nowrap;justify-content:space-between;padding:8px 14px;gap:8px}
+  .brand{font-size:16px;margin:0;white-space:nowrap}
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:6;flex:none;overflow:visible;justify-content:space-around;gap:0;
+      background:var(--card);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+  nav a{flex:1;flex-direction:column;justify-content:center;gap:2px;min-height:50px;padding:5px 2px;font-size:11px;border-radius:10px}
+  nav a.on{background:none;color:var(--accent);font-weight:700}
+  nav svg{display:block}
+  button[data-act=add]{position:fixed;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:6;border-radius:99px;padding:12px 20px;font-size:16px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  main{padding:14px 14px calc(150px + env(safe-area-inset-bottom))}
+  input,select,textarea{font-size:16px;padding:9px 10px}
+  button{min-height:40px}button.sm{min-height:36px;padding:4px 11px}
+  .pills button{min-height:34px;padding:3px 12px}
+  .row>input,.row>select{flex:1 1 140px}
+  dialog{max-height:92dvh;overflow:auto;padding:16px}
+  h1{font-size:21px}
+}
 </style>
 </head>
 <body>
@@ -122,7 +160,7 @@ async function loadSync(){
   try{
     const r=await fetch('data.json?'+Date.now());if(!r.ok)throw new Error(r.status);
     const d=await r.json();
-    d.rankings.forEach(rk=>{const x=db.rankings.find(y=>y.id===rk.id);if(x){x.note=rk.note;x.sport=rk.sport}else db.rankings.push(rk)});
+    d.rankings.forEach(rk=>{const x=db.rankings.find(y=>y.id===rk.id);if(x){x.note=rk.note;x.sport=rk.sport;x.synced=true}else db.rankings.push({...rk,synced:true})});
     db.matches=db.matches.filter(m=>!m.ext).concat(d.matches.map(m=>({ts:Date.parse(m.date)||0,...m,id:m.ext})));
     sync={upcoming:d.upcoming||[],generated:d.generated,status:'ok',player:d.player};
     save();
@@ -146,7 +184,7 @@ function stats(ms){
   ms.forEach(m=>{m.result==='W'?s.w++:s.l++;const x=parseScore(m.score);s.sw+=x.sw;s.sl+=x.sl;s.gw+=x.gw;s.gl+=x.gl});
   s.pct=s.p?s.w/s.p:0;return s;
 }
-const asc=ms=>[...ms].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0));
+const asc=ms=>[...ms].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0)||String(a.id).localeCompare(String(b.id)));
 const desc=ms=>asc(ms).reverse();
 const rankOf=m=>db.rankings.find(r=>r.id===m.rankingId)||{name:'(deleted)',sport:'tennis'};
 const visible=()=>db.matches.filter(m=>ui.sport==='all'||rankOf(m).sport===ui.sport);
@@ -220,11 +258,12 @@ const winBar=s=>`<div class="bar-h" title="${s.w}W ${s.l}L"><i style="width:${s.
 const rec=s=>`${s.w}–${s.l}`;
 function matchTable(ms,{edit=true,showRank=true}={}){
   if(!ms.length)return '<div class="empty">No matches yet.</div>';
-  return `<div class="tw"><table><thead><tr><th>Date</th>${showRank?'<th class="hide-s">Ranking</th>':''}<th>Opponent</th><th>Score</th><th></th>${edit?'<th></th>':''}</tr></thead><tbody>`+
-    desc(ms).map(m=>`<tr><td class="small">${esc(m.date)}</td>${showRank?`<td class="hide-s small"><a href="#/rankings/${m.rankingId}">${esc(rankOf(m).name)}</a></td>`:''}
-      <td>${matchLabel(m)}${m.notes?`<div class="mute small">${esc(m.notes)}</div>`:''}</td>
-      <td>${esc(m.score||'')}</td><td><span class="chip ${m.result}">${m.result}</span></td>
-      ${edit?(m.ext?'<td><span class="tag" title="Imported from data.json; fix it at the source or re-sync">synced</span></td>':`<td style="white-space:nowrap"><button class="sm" data-act="edit" data-id="${m.id}">Edit</button> <button class="sm danger" data-act="del" data-id="${m.id}">✕</button></td>`):''}</tr>`).join('')+'</tbody></table></div>';
+  return '<div class="mlist">'+desc(ms).map(m=>{
+    const sub=[esc(m.date),showRank?`<a href="#/rankings/${m.rankingId}">${esc(rankOf(m).name)}</a>`:'',m.notes?esc(m.notes):''].filter(Boolean).join(' · ');
+    return `<div class="mrow"><span class="chip ${m.result}">${m.result}</span>
+      <div class="mmain"><div class="mopp">${matchLabel(m)}</div><div class="mute small">${sub}</div></div>
+      <div class="mscore">${esc(m.score||'')}</div>
+      ${edit&&!m.ext?`<div class="macts"><button class="sm" data-act="edit" data-id="${m.id}" aria-label="Edit match">Edit</button><button class="sm danger" data-act="del" data-id="${m.id}" aria-label="Delete match">✕</button></div>`:''}</div>`}).join('')+'</div>';
 }
 
 /* ---------- contacts + next match ---------- */
@@ -241,14 +280,18 @@ function nextUp(){
   const ups=sync.upcoming.filter(u=>ui.sport==='all'||(db.rankings.find(r=>r.id===u.rankingId)||{}).sport===ui.sport);
   if(!ups.length)return '';
   return `<div class="card"><h2>Next up</h2>`+ups.sort((a,b)=>(a.deadline||'9').localeCompare(b.deadline||'9')).map(u=>{
-    const k=oppKey(u.opponent),past=db.matches.filter(m=>(m.opponents||[]).some(n=>oppKey(n)===k)),s=stats(past),c=findContact(u.opponent);
+    const k=oppKey(u.opponent),past=db.matches.filter(m=>(m.opponents||[]).some(n=>oppKey(n)===k)),s=stats(past);
     const days=u.deadline?Math.ceil((new Date(u.deadline)-new Date(today()))/864e5):null;
     return `<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;padding:6px 0">
       <div><div style="font-size:17px;font-weight:600"><a href="#/opponents/${encodeURIComponent(u.opponent)}">${esc(u.opponent)}</a></div>
       <div class="mute small">${esc(u.label)}${u.deadline?` · play by <b>${esc(u.deadline)}</b>${days!==null?` (${days>=0?days+' days left':'overdue'})`:''}`:''}</div>
       <div class="small" style="margin-top:4px">${s.p?`Head-to-head <b>${rec(s)}</b>, last ${esc(desc(past)[0].date)}`:'First meeting'}</div></div>
-      <div class="small" style="text-align:right">${c?`${c.phone?`<div><a href="tel:${esc(c.phone.replace(/[^\d+]/g,''))}">${esc(c.phone)}</a> · <a href="${waLink(c.phone)}" target="_blank" rel="noopener">WhatsApp</a></div>`:''}${c.email?`<div><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></div>`:''}`
-        :`<span class="mute">No contact on file.${contacts.length?'':' <a href="#/data">Import your contact sheet</a>'}</span>`}</div></div>`}).join('')+'</div>';
+      <div class="small" style="flex:1 1 220px">${contactBlock(u.opponent)}</div></div>`}).join('')+'</div>';
+}
+function contactBlock(name){
+  const c=findContact(name);
+  if(!c)return `<span class="mute">No contact on file.${contacts.length?'':' <a href="#/data">Import your contact sheet</a>'}</span>`;
+  return `${c.phone?`<div class="cbtn"><a class="btn" href="tel:${esc(c.phone.replace(/[^\d+]/g,''))}">📞 ${esc(c.phone)}</a><a class="btn" href="${waLink(c.phone)}" target="_blank" rel="noopener">💬 WhatsApp</a></div>`:''}${c.email?`<div><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></div>`:''}`;
 }
 function posChart(ms){
   const a=asc(ms.filter(m=>m.pos));if(a.length<2)return '';
@@ -293,7 +336,7 @@ function pageDashboard(){
 }
 function pageMatches(){
   const opts=db.rankings.map(r=>`<option value="${r.id}" ${ui.mRank===r.id?'selected':''}>${esc(r.name)}</option>`).join('');
-  return `<h1>Matches</h1><div class="row"><input id="mq" placeholder="Search opponent, partner, notes…" value="${esc(ui.mSearch)}">
+  return `<h1>Matches</h1><div class="row"><input id="mq" placeholder="Search…" value="${esc(ui.mSearch)}">
   <select id="mr"><option value="">All rankings</option>${opts}</select>
   <select id="mres"><option value="">W + L</option><option value="W" ${ui.mRes==='W'?'selected':''}>Wins</option><option value="L" ${ui.mRes==='L'?'selected':''}>Losses</option></select></div>
   <div class="card" id="mlist"></div>`;
@@ -324,6 +367,7 @@ function pageOpponent(name){
   const per=db.rankings.map(r=>({r,s:stats(ms.filter(m=>m.rankingId===r.id))})).filter(x=>x.s.p);
   const ds=asc(ms);
   return `<p class="small"><a href="#/opponents">← Opponents</a></p><h1>${esc(ms[0].opponents.find(n=>n&&oppKey(n)===k))}</h1>${tiles(s,ms)}
+  ${contacts.length?`<div class="card"><h2>Contact</h2>${contactBlock(ms[0].opponents.find(n=>n&&oppKey(n)===k))}</div>`:''}
   <div class="grid g2"><div class="card"><h2>Head-to-head</h2>
    <p style="margin:0 0 8px">First met <b>${ds[0].date}</b>, last met <b>${ds[ds.length-1].date}</b></p>
    <p style="margin:0 0 8px">Singles ${rec(sing)} · Doubles ${rec(dbl)}</p><div>${chips(ms,15)}</div></div>
@@ -346,7 +390,7 @@ function pageRanking(id){
   const sing=stats(ms.filter(m=>m.type==='singles')),dbl=stats(ms.filter(m=>m.type==='doubles'));
   const rivals=[...opps].sort((a,b)=>b.st.p-a.st.p);
   return `<p class="small"><a href="#/rankings">← Rankings</a></p>
-  <h1>${esc(r.name)} <span class="tag">${r.sport}</span> <button class="sm" data-act="rename" data-id="${id}">Rename</button> <button class="sm danger" data-act="delrank" data-id="${id}">Delete</button></h1>
+  <h1>${esc(r.name)} <span class="tag">${r.sport}</span> ${r.synced?'':`<button class="sm" data-act="rename" data-id="${id}">Rename</button> <button class="sm danger" data-act="delrank" data-id="${id}">Delete</button>`}</h1>
   ${r.note?`<p class="mute small">${esc(r.note)}</p>`:''}
   ${ms.length?tiles(s,ms)+`<div class="card"><h2>Recent form</h2>${chips(ms,15)}<p class="mute small" style="margin:8px 0 0">Singles ${rec(sing)} · Doubles ${rec(dbl)}</p></div>
   <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>
@@ -378,8 +422,11 @@ function pageData(){
 function render(){
   const h=location.hash.replace(/^#\/?/,'')||'dashboard';
   const [sec,arg]=h.split('/');
+  const ICON={dashboard:'<path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10"/>',matches:'<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+    opponents:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.6M18 14.4c2.1.7 3.5 2.7 3.5 5.6"/>',
+    rankings:'<path d="M5 20V11M12 20V4M19 20v-6"/>',data:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'};
   $('#nav').innerHTML=[['dashboard','Overview'],['matches','Matches'],['opponents','Opponents'],['rankings','Rankings'],['data','Data']]
-    .map(([k,t])=>`<a href="#/${k}" class="${sec===k?'on':''}">${t}</a>`).join('');
+    .map(([k,t])=>`<a href="#/${k}" class="${sec===k?'on':''}" ${sec===k?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg><span>${t}</span></a>`).join('');
   $('#sportPills').innerHTML=[['all','All'],['tennis','Tennis'],['padel','Padel']].map(([k,t])=>`<button data-sport="${k}" class="${ui.sport===k?'on':''}">${t}</button>`).join('');
   const a=arg?decodeURIComponent(arg):'';
   const page={dashboard:pageDashboard,matches:pageMatches,opponents:()=>a?pageOpponent(a):pageOpponents(),rankings:()=>a?pageRanking(a):pageRankings(),data:pageData}[sec]||pageDashboard;
