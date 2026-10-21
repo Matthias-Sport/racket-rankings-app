@@ -66,6 +66,7 @@ function ccvmSets(p, mineIsFirst) {
 }
 async function scrapeCCVM(prevMatches = []) {
   const matches = [], upcoming = [], contacts = new Map();
+  const scout = new Map();                                               // group opponents -> their other results in the group
   let lastGroup = null;                                                  // standings of your most recent group (phases are scanned newest first)
   let phases = 0;
   let top = 270;                                                         // then probe upwards for newer phases
@@ -111,7 +112,8 @@ async function scrapeCCVM(prevMatches = []) {
         const oppName = tidy(opp?.nombre);
         if (!p.ganador) {
           if (iso(g.fechaFin) >= TODAY) {
-            upcoming.push({ rankingId: 'ccvm', opponent: oppName, deadline: iso(g.fechaFin), label: `${label} · Jornada ${p.jornada}` });
+            upcoming.push({ rankingId: 'ccvm', opponent: oppName, deadline: iso(g.fechaFin), label: `${label} · Jornada ${p.jornada}`,
+                            phase: fase, group: g.nombreGrupo, jornada: p.jornada, oppCode: first ? p.codigoContrario : p.codigoJugador });
           }
           continue;
         }
@@ -124,11 +126,24 @@ async function scrapeCCVM(prevMatches = []) {
           opponents: [oppName], score: score.trim(), result: won ? 'W' : 'L', notes: `${label} · Jornada ${p.jornada}`,
         });
       }
+      for (const u of upcoming.filter(x => x.phase === fase && x.group === g.nombreGrupo && x.oppCode)) {
+        const code = u.oppCode;
+        const rows = (d.partidos || []).filter(p => p.ganador && (p.codigoJugador === code || p.codigoContrario === code) && p.codigoJugador !== me.codigo && p.codigoContrario !== me.codigo);
+        scout.set(norm(u.opponent), {
+          name: u.opponent, source: 'group', pos: (d.grupo?.jugadores || []).find(j => j.codigo === code)?.posicion || undefined,
+          matches: rows.map(p => {
+            const f = p.codigoJugador === code, other = f ? p.contrario : p.jugador;
+            return { date: iso(p.fecha) || iso(g.fechaFin), label, vs: tidy(other?.nombre), score: ccvmSets(p, f) + (p.wo || p.woContrario ? ' W.O.' : ''), result: p.ganador === code ? 'W' : 'L' };
+          }).sort((a, b) => b.date.localeCompare(a.date)),
+        });
+        delete u.oppCode;
+      }
     }
   }
   const phaseOf = m => m.phase ?? +((m.notes || '').match(/Fase (\d+)/) || [])[1];
-  const older = prevMatches.filter(m => phaseOf(m) < floor).map(m => ({ ...m, phase: phaseOf(m) }));
-  return { matches: [...older, ...matches], upcoming, phases, contacts: [...contacts.values()], groups: lastGroup ? [lastGroup] : null };
+  const have = new Set(matches.map(m => m.ext));                          // never lose a stored result just because a rescan came back empty
+  const older = prevMatches.filter(m => !have.has(m.ext)).map(m => ({ ...m, phase: phaseOf(m) }));
+  return { matches: [...older, ...matches], upcoming, phases, contacts: [...contacts.values()], groups: lastGroup ? [lastGroup] : null, scouting: Object.fromEntries(scout) };
 }
 
 /* ---------- Ranking Club de Campo (rankingclubdecampo.es) ---------- */
@@ -191,7 +206,7 @@ async function scrapeCDC() {
       const opp = `${oN} ${oS}`.replace(/\s+/g, ' ').trim();
       const winner = c[7], res = c[8];
       if (!winner && !res) {
-        if (n === hi || (end && end >= TODAY)) { upcoming.push({ rankingId: 'cdc', opponent: opp, deadline: end, label, myPos: +myPos || undefined, oppPos: +oppPos || undefined }); scout.set(norm(opp), { name: opp, pos: +oppPos || undefined, matches: [] }); }
+        if (n === hi || (end && end >= TODAY)) { upcoming.push({ rankingId: 'cdc', opponent: opp, deadline: end, label, myPos: +myPos || undefined, oppPos: +oppPos || undefined }); scout.set(norm(opp), { name: opp, source: 'cuadros', pos: +oppPos || undefined, matches: [] }); }
         continue;
       }
       if (/no jugado/i.test(res) || !winner) continue;
@@ -214,7 +229,8 @@ try { ccvm = await scrapeCCVM((prev?.matches || []).filter(m => m.rankingId === 
 catch (e) {                                                              // site down or blocking: keep what we had instead of losing it
   console.warn(`CCVM site unavailable (${e.message}); keeping the previous CCVM data.`);
   ccvm = { matches: (prev?.matches || []).filter(m => m.rankingId === 'ccvm'), upcoming: (prev?.upcoming || []).filter(u => u.rankingId === 'ccvm'),
-           groups: prev?.groups || [], contacts: [], phases: 0 };
+           groups: prev?.groups || [], contacts: [], phases: 0,
+           scouting: Object.fromEntries(Object.entries(prev?.scouting || {}).filter(([, v]) => v.source === 'group')) };
 }
 const cdc = await scrapeCDC();
 const matches = [...ccvm.matches, ...cdc.matches].sort((a, b) => (a.date + a.ext).localeCompare(b.date + b.ext));
@@ -224,7 +240,7 @@ const out = {
   matches,
   upcoming: [...ccvm.upcoming, ...cdc.upcoming],
   standings: cdc.standings,                                              // ladder position per ranking
-  scouting: cdc.scouting,                                                // recent results of your upcoming opponents (Club de Campo)
+  scouting: { ...cdc.scouting, ...(ccvm.scouting || {}) },                                                // recent results of your upcoming opponents (Club de Campo)
   groups: ccvm.groups,                                                   // your latest CCVM group, with the full table
 };
 const same = prev && JSON.stringify({ ...prev, generated: '' }) === JSON.stringify({ ...out, generated: '' });

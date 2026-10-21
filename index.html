@@ -56,6 +56,15 @@ th{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 [hidden]{display:none!important}
 td.d{white-space:nowrap}
+.uphead{font-size:12px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 0}
+.uprow{border-top:1px solid var(--line)}.uphead+.uprow{border-top:0}
+.uprow>summary{display:flex;align-items:center;gap:8px;padding:10px 0;cursor:pointer;min-height:56px}
+.uprow>summary::before{content:'▸';color:var(--mute);flex:none;font-size:15px;width:14px}.uprow[open]>summary::before{content:'▾'}
+.upmain{flex:1;min-width:0}.upname{font-size:16px;font-weight:600;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.st{display:inline-block;border-radius:99px;padding:1px 9px;font-size:12px;font-weight:600;background:var(--soft);color:var(--mute)}
+.st.none{background:transparent;border:1px solid var(--loss);color:var(--loss)}.st.agreed{background:var(--accent);color:var(--accent-ink)}
+.upbody{padding:0 0 12px 18px}
 .calrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}.calrow>span{flex:1 1 0;min-width:0;font-size:14px}.calrow .btn{white-space:nowrap;padding:6px 10px;font-size:14px}
 .alert{border-color:var(--loss);background:var(--soft)}
 details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}
@@ -363,21 +372,47 @@ function planControls(u,i){
     ${resultBlock(u,p)}
     <div style="margin-top:10px">${calRows(u,i,p)}</div></div>`;
 }
-function nextUp(){
-  const ups=visibleUpcoming();
-  if(!ups.length)return '';
-  return `<div class="card"><h2>Next up</h2>`+ups.sort((a,b)=>(a.deadline||'9').localeCompare(b.deadline||'9')).map(u=>{
-    const i=sync.upcoming.indexOf(u),k=oppKey(u.opponent),past=db.matches.filter(m=>(m.opponents||[]).some(n=>oppKey(n)===k)),s=stats(past);
-    const days=daysLeft(u.deadline),note=notes[k];
-    return `<div style="padding:8px 0;border-top:1px solid var(--line)">
-      <div style="font-size:17px;font-weight:600"><a href="#/opponents/${encodeURIComponent(u.opponent)}">${esc(u.opponent)}</a></div>
-      <div class="mute small">${esc(u.label)}${u.deadline?` · play by <b>${esc(fmtDate(u.deadline))}</b>${days!==null?` (${days>=0?days+' days left':'overdue'})`:''}`:''}</div>
-      ${u.myPos||u.oppPos?`<div class="small" style="margin-top:4px">Ladder position: you <b>#${u.myPos||'?'}</b> · ${esc(u.opponent.split(' ')[0])} <b>#${u.oppPos||'?'}</b></div>`:''}
+function oppStanding(u){
+  const g=sync.groups.find(x=>x.rankingId===u.rankingId&&x.current);if(!g)return '';
+  const q=g.players.find(x=>plain(x.name)===plain(u.opponent));if(!q)return '';
+  return `${q.pos?ord(q.pos)+' · ':''}${q.pts} pts · ${q.pj} played`;
+}
+function statusChip(u){
+  const p=plans[planKey(u)]||{},st=p.status||'';
+  const lab={'':'Not contacted',contacted:'Contacted',agreed:'Date agreed',played:'Played'}[st];
+  const when=st==='agreed'&&p.when?': '+new Date(p.when).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'2-digit'})+' '+p.when.slice(11,16):'';
+  return `<span class="st ${st||'none'}">${lab}${when}</span>`;
+}
+function upRow(u,single){
+  const i=sync.upcoming.indexOf(u),key='row:'+planKey(u),k=oppKey(u.opponent);
+  const open=ui.open&&key in ui.open?ui.open[key]:single;
+  const past=db.matches.filter(m=>(m.opponents||[]).some(n=>oppKey(n)===k)),s=stats(past),days=daysLeft(u.deadline),note=notes[k],stand=oppStanding(u);
+  const where=u.jornada?`Jornada ${u.jornada}`:u.label;
+  const due=u.deadline?`play by <b>${esc(fmtDate(u.deadline).slice(0,5))}</b>${days!==null?` (${days>=0?days+'d left':'overdue'})`:''}`:'';
+  return `<details class="uprow" data-open="${esc(key)}" ${open?'open':''}>
+    <summary><div class="upmain"><div class="upname">${esc(u.opponent)}</div>
+      <div class="mute small">${esc(where)}${due?' · '+due:''}</div>
+      <div class="chips">${statusChip(u)}${stand?`<span class="st">${esc(stand)}</span>`:''}${u.oppPos?`<span class="st">#${u.oppPos} on ladder</span>`:''}${s.p?`<span class="st">H2H ${rec(s)}</span>`:''}</div></div></summary>
+    <div class="upbody">
+      ${u.myPos||u.oppPos?`<div class="small">Ladder position: you <b>#${u.myPos||'?'}</b> · ${esc(u.opponent.split(' ')[0])} <b>#${u.oppPos||'?'}</b></div>`:''}
+      <div class="small" style="margin-top:4px">${esc(u.label)}</div>
       <div class="small" style="margin-top:4px">${s.p?`Head-to-head <b>${rec(s)}</b>, last ${esc(desc(past)[0].date)}`:'First meeting'}</div>
       ${note?`<div class="small" style="margin-top:4px">📝 ${esc(note)}</div>`:''}
       <div style="margin-top:8px">${contactBlock(u.opponent,i)}</div>
       ${planControls(u,i)}
-      <details data-open="${i}" ${ui.open&&ui.open[i]?'open':''} style="margin-top:10px"><summary class="small" style="cursor:pointer;color:var(--accent);min-height:32px">Scouting report</summary>${scoutBlock(u.opponent,u)}</details></div>`}).join('')+'</div>';
+      <details data-open="scout:${i}" ${ui.open&&ui.open['scout:'+i]?'open':''} style="margin-top:10px"><summary class="small" style="cursor:pointer;color:var(--accent);min-height:32px">Scouting report</summary>${scoutBlock(u.opponent,u)}</details>
+    </div></details>`;
+}
+function nextUp(){
+  const ups=visibleUpcoming();
+  if(!ups.length)return '';
+  const sorted=ups.slice().sort((a,b)=>(a.deadline||'9').localeCompare(b.deadline||'9')||(a.jornada||0)-(b.jornada||0)||a.opponent.localeCompare(b.opponent));
+  const rids=[...new Set(sorted.map(u=>u.rankingId))];
+  return `<div class="card"><h2>Next up</h2>`+rids.map(rid=>{
+    const r=db.rankings.find(x=>x.id===rid)||{name:rid},items=sorted.filter(u=>u.rankingId===rid);
+    const g=sync.groups.find(x=>x.rankingId===rid&&x.current);
+    return (rids.length>1||items.length>1?`<div class="uphead">${esc(r.name)}${g?' · '+esc(g.name):''}</div>`:'')+items.map(u=>upRow(u,sorted.length===1)).join('');
+  }).join('')+'</div>';
 }
 function contactBlock(name,i){
   const c=findContact(name);
@@ -400,7 +435,7 @@ function scoutBlock(name,u){
     <div>Won <b>${w} of ${ms.length}</b> · straight-set wins ${straight} · went to a 3rd set/tiebreak ${three}×${gw+gl?` · games ${gw}–${gl}`:''}</div>
     <div style="margin:6px 0">${ms.slice().reverse().map(m=>`<span class="chip ${m.result}">${m.result}</span>`).join(' ')}</div>
     <div class="tw"><table><tbody>${ms.slice(0,6).map(m=>`<tr><td class="d">${esc(m.date.slice(5))}</td><td>${esc(m.vs)}${m.vsPos?` <span class="mute">#${m.vsPos}</span>`:''}</td><td class="n">${esc(m.score)}</td><td><span class="chip ${m.result}">${m.result}</span></td></tr>`).join('')}</tbody></table></div>
-    <div class="mute" style="margin-top:4px">From the public cuadros; matches against you are in your head-to-head.</div></div>`;
+    <div class="mute" style="margin-top:4px">${sc.source==='group'?'From your group results':'From the public cuadros'}; matches against you are in your head-to-head.</div></div>`;
 }
 function ics(filename,ev){
   const pad=n=>String(n).padStart(2,'0'),t=x=>String(x).replace(/[\;,]/g,m=>'\\'+m).replace(/\n/g,'\\n');
