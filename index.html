@@ -183,7 +183,7 @@ const unlockForm=(label)=>`<form data-unlock class="row" style="margin:6px 0 0">
 /* ---------- synced data (data.json, written by scripts/scrape.mjs) ---------- */
 const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(KEY+k));return v??d}catch(e){return d}};
 const lsSet=(k,v)=>{try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){alert('Could not save to browser storage.')}};
-const DEFAULT_TPL='Hola {name}, soy {me}. Nos toca jugar nuestro partido del ranking ({label}), antes del {deadline}. ¿Qué días y horas te vienen bien? ¡Gracias!';
+const DEFAULT_TPL='Hola {name}, soy {me}. Nos toca jugar nuestro partido del ranking, antes del {deadline}. ¿Qué días y horas te vienen bien? ¡Gracias!';
 let encBlob=null;
 let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL);
 let sync={upcoming:[],standings:[],groups:[],scouting:{},generated:'',status:'not loaded'};
