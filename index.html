@@ -56,6 +56,7 @@ th{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 [hidden]{display:none!important}
 td.d{white-space:nowrap}
+.calrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}.calrow>span{flex:1 1 0;min-width:0;font-size:14px}.calrow .btn{white-space:nowrap;padding:6px 10px;font-size:14px}
 .alert{border-color:var(--loss);background:var(--soft)}
 details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}
 details>summary::before{content:'▸ '}details[open]>summary::before{content:'▾ '}
@@ -336,7 +337,7 @@ function planControls(u,i){
     ${p.status==='agreed'&&p.when?`<label>Which hour do you book? (one hour per player per day)</label>
     <select data-plan="slot"><option value="first" ${p.slot!=='second'?'selected':''}>I book the 1st hour (${hhmm(p.when,0)}–${hhmm(p.when,60)})</option><option value="second" ${p.slot==='second'?'selected':''}>I book the 2nd hour (${hhmm(p.when,60)}–${hhmm(p.when,120)})</option></select>`:''}
     <label>Note</label><input data-plan="note" value="${esc(p.note||'')}" placeholder="e.g. court 3, bring balls" autocomplete="off">
-    <div class="cbtn" style="margin-top:8px">${p.status==='agreed'&&p.when?`<button class="btn" data-act="cal-match" data-u="${i}">📅 Add match to calendar</button><button class="btn" data-act="cal-book" data-u="${i}">🔔 Booking reminder (day before, 10:00)</button>`:''}${u.deadline?`<button class="btn" data-act="cal-deadline" data-u="${i}">⏰ Add deadline to calendar</button>`:''}</div></div>`;
+    <div style="margin-top:10px">${calRows(u,i,p)}</div></div>`;
 }
 function nextUp(){
   const ups=visibleUpcoming();
@@ -390,6 +391,43 @@ function calMatch(u){
   ics('match-'+plain(u.opponent).replace(/ /g,'-')+'.ics',(pad,t)=>[`DTSTART:${f(st)}`,`DTEND:${f(en)}`,`SUMMARY:${t('Tennis vs '+u.opponent)}`,`DESCRIPTION:${t(u.label+(p.note?'\n'+p.note:''))}`,
     'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY',`DESCRIPTION:${t('Match vs '+u.opponent)}`,'END:VALARM']);
 }
+const gpad=n=>String(n).padStart(2,'0');
+const gdate=(y,mo,d)=>`${y}${gpad(mo)}${gpad(d)}`;
+function bookingInfo(u){
+  const p=plans[planKey(u)]||{};if(!p.when)return null;
+  const [dp,tp]=p.when.split('T'),[y,mo,d]=dp.split('-').map(Number),[h,mi]=tp.split(':').map(Number);
+  const slot=p.slot==='second'?1:0,dayName=new Date(Date.UTC(y,mo-1,d)).toLocaleDateString('en-GB',{weekday:'long',timeZone:'UTC'});
+  const sport=(db.rankings.find(r=>r.id===u.rankingId)||{}).sport||'tennis',time=hhmm(p.when,slot*60),span=`${hhmm(p.when,0)}–${hhmm(p.when,matchMinutes(u))}`;
+  const prev=new Date(Date.UTC(y,mo-1,d-1));
+  return {p,dp,y,mo,d,h,mi,slot,dayName,sport,time,span,prev,
+    title:`Book ${sport} for ${dayName} at ${time}`,
+    details:`Match vs ${u.opponent} (${u.label}) on ${dayName} ${fmtDate(dp)}, ${span}. You book the ${slot?'2nd':'1st'} hour (${time}); your opponent books the other. Bookings open at 10:00 Madrid time the day before.`};
+}
+function gcalUrl(kind,u){
+  const p=plans[planKey(u)]||{};let title,details,dates;
+  if(kind==='deadline'){
+    if(!u.deadline)return '';
+    const [y,m,d]=u.deadline.split('-').map(Number),n=new Date(Date.UTC(y,m-1,d+1));
+    title='Deadline: play '+u.opponent;details=u.label;dates=`${gdate(y,m,d)}/${gdate(n.getUTCFullYear(),n.getUTCMonth()+1,n.getUTCDate())}`;
+  }else{
+    const b=bookingInfo(u);if(!b)return '';
+    if(kind==='match'){
+      const [y,mo,d,h,mi]=[b.y,b.mo,b.d,b.h,b.mi],en=new Date(Date.UTC(y,mo-1,d,h,mi+matchMinutes(u)));
+      title=`${b.sport==='padel'?'Padel':'Tennis'} vs ${u.opponent}`;details=u.label+(b.p.note?'\n'+b.p.note:'');
+      dates=`${gdate(y,mo,d)}T${gpad(h)}${gpad(mi)}00/${gdate(en.getUTCFullYear(),en.getUTCMonth()+1,en.getUTCDate())}T${gpad(en.getUTCHours())}${gpad(en.getUTCMinutes())}00`;
+    }else{
+      const pv=b.prev,day=gdate(pv.getUTCFullYear(),pv.getUTCMonth()+1,pv.getUTCDate());
+      title=b.title;details=b.details;dates=`${day}T100000/${day}T100500`;     // 10:00-10:05 Madrid time the day before
+    }
+  }
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+dates+'&details='+encodeURIComponent(details)+'&ctz='+encodeURIComponent('Europe/Madrid');
+}
+function calRows(u,i,p){
+  const row=(label,kind,act)=>{const url=gcalUrl(kind,u);return url?`<div class="calrow"><span>${label}</span><a class="btn" href="${url}" target="_blank" rel="noopener">Google Calendar</a><button class="btn" data-act="${act}" data-u="${i}" title="Download an .ics file (Apple Calendar, Outlook)">.ics</button></div>`:''};
+  const agreed=p.status==='agreed'&&p.when;
+  return (agreed?row(`📅 Match (${matchMinutes(u)/60===1.5?'1.5':matchMinutes(u)/60} h)`,'match','cal-match')+row('🔔 Booking reminder','booking','cal-book'):'')+row('⏰ Deadline','deadline','cal-deadline')
+    ||'<span class="mute small">Set the status to “Date agreed” and enter a date to add the match to your calendar.</span>';
+}
 function madridUTC(y,mo,d,h,mi){                                        // the UTC instant at which Madrid clocks show y-mo-d h:mi (handles summer/winter time)
   const want=Date.UTC(y,mo-1,d,h,mi);let t=want;
   const fmt=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -397,14 +435,10 @@ function madridUTC(y,mo,d,h,mi){                                        // the U
   return new Date(t);
 }
 function calBooking(u){
-  const p=plans[planKey(u)]||{};if(!p.when)return;
-  const [dp,tp]=p.when.split('T'),[y,mo,d]=dp.split('-').map(Number),[h,mi]=tp.split(':').map(Number);
-  const slot=p.slot==='second'?1:0,dayName=new Date(Date.UTC(y,mo-1,d)).toLocaleDateString('en-GB',{weekday:'long',timeZone:'UTC'});
-  const prev=new Date(Date.UTC(y,mo-1,d-1)),st=madridUTC(prev.getUTCFullYear(),prev.getUTCMonth()+1,prev.getUTCDate(),10,0),en=new Date(st.getTime()+5*60000);
-  const f=x=>x.toISOString().replace(/[-:]|\.\d+/g,''),sport=(db.rankings.find(r=>r.id===u.rankingId)||{}).sport||'tennis',time=hhmm(p.when,slot*60),span=`${hhmm(p.when,0)}–${hhmm(p.when,matchMinutes(u))}`;
-  ics('book-'+plain(u.opponent).replace(/ /g,'-')+'.ics',(pad,t)=>[`DTSTART:${f(st)}`,`DTEND:${f(en)}`,`SUMMARY:${t(`Book ${sport} for ${dayName} at ${time}`)}`,
-    `DESCRIPTION:${t(`Match vs ${u.opponent} (${u.label}) on ${dayName} ${fmtDate(dp)}, ${span}. You book the ${slot?'2nd':'1st'} hour (${time}); your opponent books the other. Bookings open at 10:00 Madrid time the day before.`)}`,
-    'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY',`DESCRIPTION:${t(`Book ${sport} for ${dayName} at ${time}`)}`,'END:VALARM']);
+  const b=bookingInfo(u);if(!b)return;
+  const st=madridUTC(b.prev.getUTCFullYear(),b.prev.getUTCMonth()+1,b.prev.getUTCDate(),10,0),en=new Date(st.getTime()+5*60000),f=x=>x.toISOString().replace(/[-:]|\.\d+/g,'');
+  ics('book-'+plain(u.opponent).replace(/ /g,'-')+'.ics',(pad,t)=>[`DTSTART:${f(st)}`,`DTEND:${f(en)}`,`SUMMARY:${t(b.title)}`,`DESCRIPTION:${t(b.details)}`,
+    'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY',`DESCRIPTION:${t(b.title)}`,'END:VALARM']);
 }
 function calDeadline(u){
   const d=new Date(u.deadline+'T00:00:00'),n=new Date(d.getTime()+864e5);
