@@ -316,7 +316,7 @@ function planControls(u,i){
     <div class="two"><div><label>Status</label><select data-plan="status">${STATUS.map(([v,t])=>`<option value="${v}" ${(p.status||'')===v?'selected':''}>${t}</option>`).join('')}</select></div>
     ${p.status==='agreed'?`<div><label>Date and time</label><input type="datetime-local" data-plan="when" value="${esc(p.when||'')}"></div>`:''}</div>
     <label>Note</label><input data-plan="note" value="${esc(p.note||'')}" placeholder="e.g. court 3, bring balls" autocomplete="off">
-    <div class="cbtn" style="margin-top:8px">${p.status==='agreed'&&p.when?`<button class="btn" data-act="cal-match" data-u="${i}">📅 Add match to calendar</button>`:''}${u.deadline?`<button class="btn" data-act="cal-deadline" data-u="${i}">⏰ Add deadline to calendar</button>`:''}</div></div>`;
+    <div class="cbtn" style="margin-top:8px">${p.status==='agreed'&&p.when?`<button class="btn" data-act="cal-match" data-u="${i}">📅 Add match to calendar</button><button class="btn" data-act="cal-book" data-u="${i}">🔔 Booking reminder (day before, 10:00)</button>`:''}${u.deadline?`<button class="btn" data-act="cal-deadline" data-u="${i}">⏰ Add deadline to calendar</button>`:''}</div></div>`;
 }
 function nextUp(){
   const ups=visibleUpcoming();
@@ -369,6 +369,22 @@ function calMatch(u){
   const f=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}00`;
   ics('match-'+plain(u.opponent).replace(/ /g,'-')+'.ics',(pad,t)=>[`DTSTART:${f(st)}`,`DTEND:${f(en)}`,`SUMMARY:${t('Tennis vs '+u.opponent)}`,`DESCRIPTION:${t(u.label+(p.note?'\n'+p.note:''))}`,
     'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY',`DESCRIPTION:${t('Match vs '+u.opponent)}`,'END:VALARM']);
+}
+function madridUTC(y,mo,d,h,mi){                                        // the UTC instant at which Madrid clocks show y-mo-d h:mi (handles summer/winter time)
+  const want=Date.UTC(y,mo-1,d,h,mi);let t=want;
+  const fmt=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  for(let i=0;i<2;i++){const q=fmt.formatToParts(new Date(t)).reduce((o,x)=>(o[x.type]=+x.value,o),{});t+=want-Date.UTC(q.year,q.month-1,q.day,q.hour,q.minute)}
+  return new Date(t);
+}
+function calBooking(u){
+  const p=plans[planKey(u)]||{};if(!p.when)return;
+  const [dp,tp]=p.when.split('T'),[y,mo,d]=dp.split('-').map(Number),[h,mi]=tp.split(':').map(Number);
+  const dayName=new Date(Date.UTC(y,mo-1,d)).toLocaleDateString('en-GB',{weekday:'long',timeZone:'UTC'});
+  const prev=new Date(Date.UTC(y,mo-1,d-1)),st=madridUTC(prev.getUTCFullYear(),prev.getUTCMonth()+1,prev.getUTCDate(),10,0),en=new Date(st.getTime()+5*60000);
+  const f=x=>x.toISOString().replace(/[-:]|\.\d+/g,''),sport=(db.rankings.find(r=>r.id===u.rankingId)||{}).sport||'tennis',time=`${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`;
+  ics('book-'+plain(u.opponent).replace(/ /g,'-')+'.ics',(pad,t)=>[`DTSTART:${f(st)}`,`DTEND:${f(en)}`,`SUMMARY:${t(`Book ${sport} for ${dayName} at ${time}`)}`,
+    `DESCRIPTION:${t(`Match vs ${u.opponent} (${u.label}) on ${dayName} ${fmtDate(dp)} at ${time}. Bookings open at 10:00 Madrid time the day before.`)}`,
+    'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY',`DESCRIPTION:${t(`Book ${sport} for ${dayName} at ${time}`)}`,'END:VALARM']);
 }
 function calDeadline(u){
   const d=new Date(u.deadline+'T00:00:00'),n=new Date(d.getTime()+864e5);
@@ -755,6 +771,7 @@ document.addEventListener('click',e=>{
   else if(act==='resettpl'){msgTpl=DEFAULT_TPL;lsSet('.msgtpl',msgTpl);render();toast('Message reset')}
   else if(act==='cal-match')calMatch(sync.upcoming[+b.dataset.u]);
   else if(act==='cal-deadline')calDeadline(sync.upcoming[+b.dataset.u]);
+  else if(act==='cal-book')calBooking(sync.upcoming[+b.dataset.u]);
   else if(act==='copymsg'){const t=msgText(sync.upcoming[+b.dataset.u]);
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Message copied ✓'),()=>prompt('Copy this message:',t))}
   else if(act==='clearcontacts'){if(confirm('Remove all stored contacts?')){contacts=[];saveContacts();render()}}
