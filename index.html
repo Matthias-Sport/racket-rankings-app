@@ -167,10 +167,24 @@ let ui={sport:'all',mSearch:'',mRank:'',mRes:'',oSearch:'',oSort:'played'};
 function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.matches&&r.rankings)return r}catch(e){}return{rankings:[],matches:[]}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){alert('Could not save to browser storage.')}}
 
+async function loadEnc(){try{const r=await fetch('contacts.enc.json?'+Date.now());if(r.ok){encBlob=await r.json();render()}}catch(e){}}
+async function unlockContacts(pw){
+  if(!encBlob||!pw)return;
+  const bytes=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
+  try{
+    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:bytes(encBlob.salt),iterations:encBlob.iter,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(encBlob.iv)},key,bytes(encBlob.data));
+    mergeContacts(JSON.parse(new TextDecoder().decode(pt)));
+  }catch(e){toast('Wrong passphrase, or this browser cannot decrypt')}
+}
+const unlockForm=(label)=>`<form data-unlock class="row" style="margin:6px 0 0"><input type="password" class="unlockpw" placeholder="Contacts passphrase" autocomplete="current-password" required><button class="pri">${label||'Unlock contacts'}</button></form>`;
+
 /* ---------- synced data (data.json, written by scripts/scrape.mjs) ---------- */
 const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(KEY+k));return v??d}catch(e){return d}};
 const lsSet=(k,v)=>{try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){alert('Could not save to browser storage.')}};
 const DEFAULT_TPL='Hola {name}, soy {me}. Nos toca jugar nuestro partido del ranking ({label}), antes del {deadline}. ¿Qué días y horas te vienen bien? ¡Gracias!';
+let encBlob=null;
 let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL);
 let sync={upcoming:[],standings:[],groups:[],scouting:{},generated:'',status:'not loaded'};
 let contacts=(()=>{try{return JSON.parse(localStorage.getItem(KEY+'.contacts'))||[]}catch(e){return[]}})();
@@ -340,7 +354,7 @@ function nextUp(){
 }
 function contactBlock(name,i){
   const c=findContact(name);
-  if(!c)return `<span class="mute small">No contact on file.${contacts.length?'':' <a href="#/data">Import your contact sheet</a>'}</span>`;
+  if(!c)return `<span class="mute small">No contact on file.${contacts.length?'':encBlob?'':' <a href="#/data">Import your contact sheet</a>'}</span>${!contacts.length&&encBlob?unlockForm():''}`;
   const u=i!==undefined?sync.upcoming[i]:null;
   return `${c.phone?`<div class="cbtn"><a class="btn" href="tel:${esc(c.phone.replace(/[^\d+]/g,''))}">📞 ${esc(c.phone)}</a>
     ${u?`<a class="btn" href="${waLink(c.phone)}?text=${encodeURIComponent(msgText(u))}" target="_blank" rel="noopener">💬 Propose a time</a><button class="btn" data-act="copymsg" data-u="${i}">Copy message</button>`
@@ -544,6 +558,7 @@ function pageData(){
   <p class="mute small" style="margin:0 0 10px">Refresh with <code>node scripts/scrape.mjs</code> (CCVM tennis and Club de Campo). On GitHub it can run daily by itself, see README.</p>
   <button data-act="resync">Reload data.json</button></div>
   <div class="card"><h2>Contacts</h2>
+  ${encBlob?`<div style="margin-bottom:12px"><b class="small">Club contact list (encrypted)</b><div class="mute small">Enter the passphrase once on each device; the list is then stored on that device only.</div>${unlockForm(contacts.length?'Refresh from encrypted list':'Unlock contacts')}</div>`:''}
   <p class="mute small">Stored in this browser only (never uploaded). Imports add to what is stored (existing people are updated), so you can bring in the club PDF list and the CCVM group list one after the other. Use a CSV with a name column plus phone and/or email (headers like name, nombre, teléfono, móvil, email). Names can be “Surname, Name” or “Name Surname”.</p>
   <label for="pasteC">Or paste contacts (one per line, e.g. “Manuel de Castro Zurita 655 954 772”)</label>
   <textarea id="pasteC" rows="4" placeholder="Name 600 111 222&#10;Surname, Name, 600111222, name@mail.com"></textarea>
@@ -808,10 +823,13 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('toggle',e=>{const d=e.target;if(d.tagName==='DETAILS'&&d.dataset.open!==undefined){ui.open=ui.open||{};ui.open[d.dataset.open]=d.open}},true);
 document.addEventListener('submit',e=>{
+  if(e.target.matches('form[data-unlock]')){e.preventDefault();const i=e.target.querySelector('input');unlockContacts(i.value);i.value='';return}
   if(e.target.id==='rkForm'){e.preventDefault();db.rankings.push({id:uid(),name:$('#rkn').value.trim(),sport:$('#rks').value});save();render()}
 });
 render();
 loadSync();
+loadEnc();
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
