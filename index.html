@@ -186,8 +186,10 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(KEY+k));return v
 const lsSet=(k,v)=>{try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){alert('Could not save to browser storage.')}};
 const DEFAULT_TPL='Hola {name}, soy {me}. Nos toca jugar nuestro partido del ranking, antes del {deadline}. ¿Qué días y horas te vienen bien? ¡Gracias!';
 const DEFAULT_TPL2='Hola {name}, soy {me}. Nos toca jugar de nuevo nuestro partido del ranking, antes del {deadline}. ¿Qué días y horas te vienen bien? ¡Gracias!';
+const RESULT_EMAILS={cdc:'resultados@rankingclubdecampo.es',ccvm:'info@escuelatenisccvm.com'};   // where the winner reports the result, per ranking
+const DEFAULT_RTPL='Hola, he ganado contra {opponent} y el resultado fue {score}. Gracias';
 let encBlob=null;
-let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL),msgTpl2=lsGet('.msgtpl2',DEFAULT_TPL2);
+let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL),msgTpl2=lsGet('.msgtpl2',DEFAULT_TPL2),rmail=lsGet('.rmail',{}),rtpl=lsGet('.rtpl',DEFAULT_RTPL);
 let sync={upcoming:[],standings:[],groups:[],scouting:{},generated:'',status:'not loaded'};
 let contacts=(()=>{try{return JSON.parse(localStorage.getItem(KEY+'.contacts'))||[]}catch(e){return[]}})();
 const saveContacts=()=>{try{localStorage.setItem(KEY+'.contacts',JSON.stringify(contacts))}catch(e){alert('Could not save contacts.')}};
@@ -329,6 +331,27 @@ function reminders(){
 }
 const hhmm=(when,plusMin)=>{const [h,m]=when.split('T')[1].split(':').map(Number),t=(h*60+m+plusMin)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};
 const matchMinutes=u=>((db.rankings.find(r=>r.id===u.rankingId)||{}).sport==='padel')?90:120;   // tennis courts are booked for 2 hours
+const resultTo=id=>rmail[id]??RESULT_EMAILS[id]??'';
+function resultMail(u,p){
+  const to=resultTo(u.rankingId),raw=String(p.score||'').trim();
+  const score=u.rankingId==='cdc'?raw.replace(/(\d)\s*-\s*(\d)/g,'$1/$2'):raw;       // the Club de Campo writes sets as 6/3
+  const body=rtpl.replace(/\{opponent\}/g,u.opponent).replace(/\{score\}/g,score).replace(/\{label\}/g,u.label).replace(/\{me\}/g,sync.player||'');
+  return {to,body,href:`mailto:${to}?subject=${encodeURIComponent('Resultado '+u.label)}&body=${encodeURIComponent(body)}`};
+}
+function resultBlock(u,p){
+  if(p.status!=='played')return '';
+  const out=p.outcome||'';
+  let h=`<label>How did it go?</label><select data-plan="outcome"><option value="">Choose…</option><option value="won" ${out==='won'?'selected':''}>I won</option><option value="lost" ${out==='lost'?'selected':''}>I lost</option></select>`;
+  if(out==='lost')h+='<div class="mute small" style="margin-top:6px">Only the winner reports the result, so there is nothing to send.</div>';
+  if(out==='won'){
+    h+=`<label>Score, your games first (e.g. 6-3 6-4)</label><input data-plan="score" value="${esc(p.score||'')}" placeholder="6-3 6-4" autocomplete="off">`;
+    const m=resultMail(u,p);
+    h+=!m.to?'<div class="mute small" style="margin-top:6px">No result email is set for this ranking. Add it on the <a href="#/data">Data page</a>.</div>'
+      :p.score?`<div class="cbtn" style="margin-top:8px"><a class="btn" href="${m.href}">✉ Email result to ${esc(m.to)}</a></div><div class="mute small">“${esc(m.body)}”</div>`
+      :'<div class="mute small" style="margin-top:6px">Enter the score to prepare the email.</div>';
+  }
+  return h;
+}
 function planControls(u,i){
   const p=plans[planKey(u)]||{};
   return `<div data-u="${i}" style="margin-top:10px">
@@ -337,6 +360,7 @@ function planControls(u,i){
     ${p.status==='agreed'&&p.when?`<label>Which hour do you book? (one hour per player per day)</label>
     <select data-plan="slot"><option value="first" ${p.slot!=='second'?'selected':''}>I book the 1st hour (${hhmm(p.when,0)}–${hhmm(p.when,60)})</option><option value="second" ${p.slot==='second'?'selected':''}>I book the 2nd hour (${hhmm(p.when,60)}–${hhmm(p.when,120)})</option></select>`:''}
     <label>Note</label><input data-plan="note" value="${esc(p.note||'')}" placeholder="e.g. court 3, bring balls" autocomplete="off">
+    ${resultBlock(u,p)}
     <div style="margin-top:10px">${calRows(u,i,p)}</div></div>`;
 }
 function nextUp(){
@@ -607,6 +631,13 @@ function pageData(){
   <label for="tplBox2">Opponents you have played before (warmer)</label>
   <textarea id="tplBox2" rows="4">${esc(msgTpl2)}</textarea>
   <div class="row" style="margin-top:8px"><button class="pri" data-act="savetpl">Save message</button><button data-act="resettpl">Reset</button></div></div>
+  <div class="card"><h2>Result emails</h2>
+  <p class="mute small">Where the winner sends the result. Used by “Email result” on the Overview.</p>
+  ${db.rankings.map(r=>`<label>${esc(r.name)}</label><input type="email" data-rmail="${esc(r.id)}" value="${esc(resultTo(r.id))}" placeholder="result email address" autocomplete="off">`).join('')}
+  <label for="rtplBox">Email text</label>
+  <textarea id="rtplBox" rows="3">${esc(rtpl)}</textarea>
+  <div class="mute small" style="margin-top:4px">Placeholders: <code>{opponent}</code>, <code>{score}</code>, <code>{label}</code>, <code>{me}</code></div>
+  <div class="row" style="margin-top:8px"><button class="pri" data-act="savertpl">Save text</button><button data-act="resetrtpl">Reset</button></div></div>
   <div class="card"><h2>Backup</h2><p class="mute small">Everything is stored in this browser only. Export a backup regularly, and use it to move data between devices.</p>
   <div class="row"><button data-act="exportjson">Export backup (JSON)</button><button data-act="exportcsv">Export matches (CSV)</button>
   <button data-act="importjson">Restore backup…</button></div></div>
@@ -817,7 +848,7 @@ document.addEventListener('click',e=>{
     if(confirm(`Delete this ranking and its ${n} matches?`)){db.rankings=db.rankings.filter(r=>r.id!==id);db.matches=db.matches.filter(m=>m.rankingId!==id);save();location.hash='#/rankings'}}
   else if(act==='sample')loadSample();
   else if(act==='clear'){if(confirm('Delete ALL rankings and matches from this browser?')){db={rankings:[],matches:[]};save();render()}}
-  else if(act==='exportjson')download('racket-rankings-backup-'+today()+'.json',JSON.stringify({...db,plans,notes},null,1),'application/json');
+  else if(act==='exportjson')download('racket-rankings-backup-'+today()+'.json',JSON.stringify({...db,plans,notes,rmail,rtpl,msgTpl,msgTpl2},null,1),'application/json');
   else if(act==='exportcsv'){
     const lines=desc(db.matches).map(m=>{const r=rankOf(m);return [m.date,r.name,r.sport,m.type,m.partner||'',m.opponents[0]||'',m.opponents[1]||'',m.score,m.result,m.notes||''].map(csvCell).join(',')});
     download('courtlog-matches-'+today()+'.csv',[CSV_HEAD,...lines].join('\n'),'text/csv');
@@ -827,6 +858,8 @@ document.addEventListener('click',e=>{
   else if(act==='pastecontacts')importPasted($('#pasteC').value);
   else if(act==='savetpl'){msgTpl=$('#tplBox').value.trim()||DEFAULT_TPL;msgTpl2=$('#tplBox2').value.trim()||DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);toast('Messages saved ✓')}
   else if(act==='resettpl'){msgTpl=DEFAULT_TPL;msgTpl2=DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);render();toast('Messages reset')}
+  else if(act==='savertpl'){rtpl=$('#rtplBox').value.trim()||DEFAULT_RTPL;lsSet('.rtpl',rtpl);toast('Email text saved ✓')}
+  else if(act==='resetrtpl'){rtpl=DEFAULT_RTPL;lsSet('.rtpl',rtpl);render();toast('Email text reset')}
   else if(act==='cal-match')calMatch(sync.upcoming[+b.dataset.u]);
   else if(act==='cal-deadline')calDeadline(sync.upcoming[+b.dataset.u]);
   else if(act==='cal-book')calBooking(sync.upcoming[+b.dataset.u]);
@@ -840,7 +873,7 @@ document.addEventListener('click',e=>{
         if(act==='importcsv'){importCSV(String(rd.result));return}
         if(act==='importcontacts'){importContacts(String(rd.result));return}
         try{const d=JSON.parse(rd.result);if(!d.rankings||!d.matches)throw 0;
-          if(confirm(`Replace current data with backup (${d.matches.length} matches)?`)){plans=d.plans||plans;notes=d.notes||notes;lsSet('.plans',plans);lsSet('.notes',notes);db={rankings:d.rankings,matches:d.matches};save();render()}}
+          if(confirm(`Replace current data with backup (${d.matches.length} matches)?`)){plans=d.plans||plans;notes=d.notes||notes;rmail=d.rmail||rmail;rtpl=d.rtpl||rtpl;msgTpl=d.msgTpl||msgTpl;msgTpl2=d.msgTpl2||msgTpl2;lsSet('.plans',plans);lsSet('.notes',notes);lsSet('.rmail',rmail);lsSet('.rtpl',rtpl);lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);db={rankings:d.rankings,matches:d.matches};save();render()}}
         catch(_){alert('That file is not a Racket Rankings backup.')}};
       rd.readAsText(file)};
     f.click();
@@ -855,6 +888,7 @@ document.addEventListener('change',e=>{
   const t=e.target.id;
   if(e.target.dataset.plan){const u=sync.upcoming[+e.target.closest('[data-u]').dataset.u],k=planKey(u);
     plans[k]={...plans[k],[e.target.dataset.plan]:e.target.value};lsSet('.plans',plans);render();return}
+  if(e.target.dataset.rmail!==undefined){rmail[e.target.dataset.rmail]=e.target.value.trim();lsSet('.rmail',rmail);toast('Email saved ✓');return}
   if(t==='oppNote'){const k=e.target.dataset.opp;if(e.target.value.trim())notes[k]=e.target.value.trim();else delete notes[k];lsSet('.notes',notes);toast('Note saved ✓');return}
   if(t==='mr'){ui.mRank=e.target.value;fillMatches()}
   else if(t==='mres'){ui.mRes=e.target.value;fillMatches()}
