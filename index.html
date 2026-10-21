@@ -184,8 +184,9 @@ const unlockForm=(label)=>`<form data-unlock class="row" style="margin:6px 0 0">
 const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(KEY+k));return v??d}catch(e){return d}};
 const lsSet=(k,v)=>{try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){alert('Could not save to browser storage.')}};
 const DEFAULT_TPL='Hola {name}, soy {me}. Nos toca jugar nuestro partido del ranking, antes del {deadline}. ¿Qué días y horas te vienen bien? ¡Gracias!';
+const DEFAULT_TPL2='Hola {name}, soy {me}. Nos toca jugar de nuevo nuestro partido del ranking, antes del {deadline}. ¿Qué días y horas te vienen bien? ¡Gracias!';
 let encBlob=null;
-let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL);
+let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL),msgTpl2=lsGet('.msgtpl2',DEFAULT_TPL2);
 let sync={upcoming:[],standings:[],groups:[],scouting:{},generated:'',status:'not loaded'};
 let contacts=(()=>{try{return JSON.parse(localStorage.getItem(KEY+'.contacts'))||[]}catch(e){return[]}})();
 const saveContacts=()=>{try{localStorage.setItem(KEY+'.contacts',JSON.stringify(contacts))}catch(e){alert('Could not save contacts.')}};
@@ -315,7 +316,8 @@ const fmtDate=d=>d?d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4):'';
 const daysLeft=d=>d?Math.ceil((new Date(d)-new Date(today()))/864e5):null;
 function msgText(u){
   const first=u.opponent.split(' ')[0],me=(sync.player||'').split(' ')[0]||'';
-  return msgTpl.replace(/\{name\}/g,first).replace(/\{me\}/g,me).replace(/\{label\}/g,u.label).replace(/\{deadline\}/g,u.deadline?fmtDate(u.deadline):'la fecha límite');
+  const k=oppKey(u.opponent),again=db.matches.some(m=>(m.opponents||[]).some(n=>oppKey(n)===k));   // played them before -> warmer message
+  return (again?msgTpl2:msgTpl).replace(/\{name\}/g,first).replace(/\{me\}/g,me).replace(/\{label\}/g,u.label).replace(/\{deadline\}/g,u.deadline?fmtDate(u.deadline):'la fecha límite');
 }
 function visibleUpcoming(){return sync.upcoming.filter(u=>ui.sport==='all'||(db.rankings.find(r=>r.id===u.rankingId)||{}).sport===ui.sport)}
 function reminders(){
@@ -565,8 +567,11 @@ function pageData(){
   <div class="row" style="margin-top:8px"><button class="pri" data-act="pastecontacts">Add pasted contacts</button></div>
   <div class="row"><button data-act="importcontacts">Import contacts CSV…</button><span class="small mute">${contacts.length} contacts stored</span>${contacts.length?'<button class="danger sm" data-act="clearcontacts">Remove all</button>':''}</div></div>
   <div class="card"><h2>Message to opponents</h2>
-  <p class="mute small">Used by “Propose a time” on the Overview. Placeholders: <code>{name}</code> opponent first name, <code>{me}</code> your first name, <code>{label}</code> cuadro/phase, <code>{deadline}</code> play-by date.</p>
+  <p class="mute small">Used by “Propose a time” on the Overview. The warmer version is used automatically when you have played that opponent before. Placeholders: <code>{name}</code> opponent first name, <code>{me}</code> your first name, <code>{label}</code> cuadro/phase, <code>{deadline}</code> play-by date.</p>
+  <label for="tplBox">First meeting</label>
   <textarea id="tplBox" rows="4">${esc(msgTpl)}</textarea>
+  <label for="tplBox2">Opponents you have played before (warmer)</label>
+  <textarea id="tplBox2" rows="4">${esc(msgTpl2)}</textarea>
   <div class="row" style="margin-top:8px"><button class="pri" data-act="savetpl">Save message</button><button data-act="resettpl">Reset</button></div></div>
   <div class="card"><h2>Backup</h2><p class="mute small">Everything is stored in this browser only. Export a backup regularly, and use it to move data between devices.</p>
   <div class="row"><button data-act="exportjson">Export backup (JSON)</button><button data-act="exportcsv">Export matches (CSV)</button>
@@ -786,8 +791,8 @@ document.addEventListener('click',e=>{
   else if(act==='csvtemplate')download('courtlog-template.csv',CSV_HEAD+'\n2026-05-02,Club Ladder,tennis,singles,,Anna Keller,,6-4 3-6 10-8,W,Round 2\n2026-05-09,Padel Series,padel,doubles,Ben Fischer,Dana Weiss,Ivo Novak,4-6 6-3 6-2,W,\n','text/csv');
   else if(act==='resync')loadSync();
   else if(act==='pastecontacts')importPasted($('#pasteC').value);
-  else if(act==='savetpl'){msgTpl=$('#tplBox').value.trim()||DEFAULT_TPL;lsSet('.msgtpl',msgTpl);toast('Message saved ✓')}
-  else if(act==='resettpl'){msgTpl=DEFAULT_TPL;lsSet('.msgtpl',msgTpl);render();toast('Message reset')}
+  else if(act==='savetpl'){msgTpl=$('#tplBox').value.trim()||DEFAULT_TPL;msgTpl2=$('#tplBox2').value.trim()||DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);toast('Messages saved ✓')}
+  else if(act==='resettpl'){msgTpl=DEFAULT_TPL;msgTpl2=DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);render();toast('Messages reset')}
   else if(act==='cal-match')calMatch(sync.upcoming[+b.dataset.u]);
   else if(act==='cal-deadline')calDeadline(sync.upcoming[+b.dataset.u]);
   else if(act==='cal-book')calBooking(sync.upcoming[+b.dataset.u]);
