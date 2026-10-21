@@ -310,11 +310,15 @@ function reminders(){
     return `<div class="card alert">⏰ <b>${esc(u.opponent)}</b>: ${d<0?`play-by date passed ${-d} day${d===-1?'':'s'} ago`:d===0?'play-by date is <b>today</b>':`<b>${d} day${d===1?'':'s'}</b> left to play`} (${fmtDate(u.deadline)}).
       <span class="mute small">${esc(st)}${p.status==='agreed'&&p.when?' · '+esc(p.when.replace('T',' ')):''}</span></div>`}).join('');
 }
+const hhmm=(when,plusMin)=>{const [h,m]=when.split('T')[1].split(':').map(Number),t=(h*60+m+plusMin)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};
+const matchMinutes=u=>((db.rankings.find(r=>r.id===u.rankingId)||{}).sport==='padel')?90:120;   // tennis courts are booked for 2 hours
 function planControls(u,i){
   const p=plans[planKey(u)]||{};
   return `<div data-u="${i}" style="margin-top:10px">
     <div class="two"><div><label>Status</label><select data-plan="status">${STATUS.map(([v,t])=>`<option value="${v}" ${(p.status||'')===v?'selected':''}>${t}</option>`).join('')}</select></div>
     ${p.status==='agreed'?`<div><label>Date and time</label><input type="datetime-local" data-plan="when" value="${esc(p.when||'')}"></div>`:''}</div>
+    ${p.status==='agreed'&&p.when?`<label>Which hour do you book? (one hour per player per day)</label>
+    <select data-plan="slot"><option value="first" ${p.slot!=='second'?'selected':''}>I book the 1st hour (${hhmm(p.when,0)}–${hhmm(p.when,60)})</option><option value="second" ${p.slot==='second'?'selected':''}>I book the 2nd hour (${hhmm(p.when,60)}–${hhmm(p.when,120)})</option></select>`:''}
     <label>Note</label><input data-plan="note" value="${esc(p.note||'')}" placeholder="e.g. court 3, bring balls" autocomplete="off">
     <div class="cbtn" style="margin-top:8px">${p.status==='agreed'&&p.when?`<button class="btn" data-act="cal-match" data-u="${i}">📅 Add match to calendar</button><button class="btn" data-act="cal-book" data-u="${i}">🔔 Booking reminder (day before, 10:00)</button>`:''}${u.deadline?`<button class="btn" data-act="cal-deadline" data-u="${i}">⏰ Add deadline to calendar</button>`:''}</div></div>`;
 }
@@ -365,7 +369,7 @@ function ics(filename,ev){
 }
 function calMatch(u){
   const p=plans[planKey(u)]||{};if(!p.when)return;
-  const st=new Date(p.when),en=new Date(st.getTime()+90*60000);
+  const st=new Date(p.when),en=new Date(st.getTime()+matchMinutes(u)*60000);
   const f=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}00`;
   ics('match-'+plain(u.opponent).replace(/ /g,'-')+'.ics',(pad,t)=>[`DTSTART:${f(st)}`,`DTEND:${f(en)}`,`SUMMARY:${t('Tennis vs '+u.opponent)}`,`DESCRIPTION:${t(u.label+(p.note?'\n'+p.note:''))}`,
     'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY',`DESCRIPTION:${t('Match vs '+u.opponent)}`,'END:VALARM']);
@@ -379,11 +383,11 @@ function madridUTC(y,mo,d,h,mi){                                        // the U
 function calBooking(u){
   const p=plans[planKey(u)]||{};if(!p.when)return;
   const [dp,tp]=p.when.split('T'),[y,mo,d]=dp.split('-').map(Number),[h,mi]=tp.split(':').map(Number);
-  const dayName=new Date(Date.UTC(y,mo-1,d)).toLocaleDateString('en-GB',{weekday:'long',timeZone:'UTC'});
+  const slot=p.slot==='second'?1:0,dayName=new Date(Date.UTC(y,mo-1,d)).toLocaleDateString('en-GB',{weekday:'long',timeZone:'UTC'});
   const prev=new Date(Date.UTC(y,mo-1,d-1)),st=madridUTC(prev.getUTCFullYear(),prev.getUTCMonth()+1,prev.getUTCDate(),10,0),en=new Date(st.getTime()+5*60000);
-  const f=x=>x.toISOString().replace(/[-:]|\.\d+/g,''),sport=(db.rankings.find(r=>r.id===u.rankingId)||{}).sport||'tennis',time=`${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`;
+  const f=x=>x.toISOString().replace(/[-:]|\.\d+/g,''),sport=(db.rankings.find(r=>r.id===u.rankingId)||{}).sport||'tennis',time=hhmm(p.when,slot*60),span=`${hhmm(p.when,0)}–${hhmm(p.when,matchMinutes(u))}`;
   ics('book-'+plain(u.opponent).replace(/ /g,'-')+'.ics',(pad,t)=>[`DTSTART:${f(st)}`,`DTEND:${f(en)}`,`SUMMARY:${t(`Book ${sport} for ${dayName} at ${time}`)}`,
-    `DESCRIPTION:${t(`Match vs ${u.opponent} (${u.label}) on ${dayName} ${fmtDate(dp)} at ${time}. Bookings open at 10:00 Madrid time the day before.`)}`,
+    `DESCRIPTION:${t(`Match vs ${u.opponent} (${u.label}) on ${dayName} ${fmtDate(dp)}, ${span}. You book the ${slot?'2nd':'1st'} hour (${time}); your opponent books the other. Bookings open at 10:00 Madrid time the day before.`)}`,
     'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY',`DESCRIPTION:${t(`Book ${sport} for ${dayName} at ${time}`)}`,'END:VALARM']);
 }
 function calDeadline(u){
