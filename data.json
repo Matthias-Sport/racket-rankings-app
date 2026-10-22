@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-20T10:49:32.575Z",
+ "generated": "2026-10-22T10:59:46.120Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -529,6 +529,7 @@
  "scouting": {
   "manuel de castro zurita": {
    "name": "Manuel de Castro Zurita",
+   "source": "cuadros",
    "pos": 101,
    "matches": [
     {
