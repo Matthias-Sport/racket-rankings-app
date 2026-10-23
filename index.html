@@ -693,6 +693,12 @@ function pageData(){
   <textarea id="rtplBox" rows="3">${esc(rtpl)}</textarea>
   <div class="mute small" style="margin-top:4px">Placeholders: <code>{opponent}</code>, <code>{score}</code>, <code>{label}</code>, <code>{me}</code></div>
   <div class="row" style="margin-top:8px"><button class="pri" data-act="savertpl">Save text</button><button data-act="resetrtpl">Reset</button></div></div>
+  <div class="card"><h2>Move data to another device</h2>
+  <p class="mute small">One code with your hand-entered matches, notes, match statuses, result-email settings and message wording. Send it to yourself (WhatsApp, email, Notes) and paste it on the other device. Contacts are not included: unlock them there with your passphrase.</p>
+  <div class="row"><button class="pri" data-act="copybackup">Copy backup code</button></div>
+  <label for="restoreBox">On the other device, paste the code here</label>
+  <textarea id="restoreBox" rows="3" placeholder="RR1:…" autocomplete="off"></textarea>
+  <div class="row" style="margin-top:8px"><button data-act="restorebackup">Restore from code</button></div></div>
   <div class="card"><h2>Backup</h2><p class="mute small">Everything is stored in this browser only. Export a backup regularly, and use it to move data between devices.</p>
   <div class="row"><button data-act="exportjson">Export backup (JSON)</button><button data-act="exportcsv">Export matches (CSV)</button>
   <button data-act="importjson">Restore backup…</button></div></div>
@@ -827,6 +833,25 @@ function importCSV(text){
   save();render();alert(`Imported ${n} matches.`+(bad?` Skipped ${bad} rows (need date as YYYY-MM-DD and an opponent).`:''));
 }
 
+/* ---------- move your data to another device (copy / paste code) ---------- */
+function backupCode(){
+  const payload={v:1,saved:new Date().toISOString(),manual:db.matches.filter(m=>!m.ext),rankings:db.rankings.filter(r=>!r.synced),plans,notes,rmail,rtpl,msgTpl,msgTpl2};
+  return 'RR1:'+btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+function restoreCode(text){
+  const t=String(text||'').trim();
+  if(!t.startsWith('RR1:')){alert('That is not a Racket Rankings backup code (it should start with RR1:).');return false}
+  let d;try{d=JSON.parse(decodeURIComponent(escape(atob(t.slice(4).replace(/\s+/g,'')))))}catch(e){alert('The code looks incomplete or damaged. Copy it again, making sure the whole text is included.');return false}
+  if(!d||!Array.isArray(d.manual)){alert('The code does not contain backup data.');return false}
+  if(!confirm(`Add ${d.manual.length} hand-entered matches, ${Object.keys(d.notes||{}).length} notes and ${Object.keys(d.plans||{}).length} match statuses from the backup? Your current data stays; the backup fills in the rest.`))return false;
+  (d.rankings||[]).forEach(r=>{if(!db.rankings.some(x=>x.id===r.id))db.rankings.push(r)});
+  const have=new Set(db.matches.map(m=>m.id));
+  d.manual.forEach(m=>{if(!have.has(m.id))db.matches.push(m)});
+  plans={...plans,...(d.plans||{})};notes={...notes,...(d.notes||{})};rmail={...rmail,...(d.rmail||{})};
+  rtpl=d.rtpl||rtpl;msgTpl=d.msgTpl||msgTpl;msgTpl2=d.msgTpl2||msgTpl2;
+  save();lsSet('.plans',plans);lsSet('.notes',notes);lsSet('.rmail',rmail);lsSet('.rtpl',rtpl);lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);
+  render();return true;
+}
 function importContacts(text){
   const first=text.split(/\r?\n/)[0]||'';const delim=(first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?';':first.includes('\t')?'\t':',';
   const rows=(delim===','?parseCSV(text):text.split(/\r?\n/).filter(l=>l.trim()).map(l=>l.split(delim).map(x=>x.replace(/^"|"$/g,''))));
@@ -913,6 +938,8 @@ document.addEventListener('click',e=>{
   else if(act==='pastecontacts')importPasted($('#pasteC').value);
   else if(act==='savetpl'){msgTpl=$('#tplBox').value.trim()||DEFAULT_TPL;msgTpl2=$('#tplBox2').value.trim()||DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);toast('Messages saved ✓')}
   else if(act==='resettpl'){msgTpl=DEFAULT_TPL;msgTpl2=DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);render();toast('Messages reset')}
+  else if(act==='copybackup'){const c=backupCode();(navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('Backup code copied ✓'),()=>prompt('Copy this backup code:',c))}
+  else if(act==='restorebackup'){if(restoreCode($('#restoreBox').value)){toast('Backup restored ✓')}}
   else if(act==='savertpl'){rtpl=$('#rtplBox').value.trim()||DEFAULT_RTPL;lsSet('.rtpl',rtpl);toast('Email text saved ✓')}
   else if(act==='resetrtpl'){rtpl=DEFAULT_RTPL;lsSet('.rtpl',rtpl);render();toast('Email text reset')}
   else if(act==='markdone'||act==='emailresult'){const u=sync.upcoming[+b.dataset.u],k=planKey(u);plans[k]={...plans[k],done:true};lsSet('.plans',plans);syncPlanMatch(u);setTimeout(render,act==='emailresult'?500:0);if(act==='markdone')toast('Moved to Done ✓')}
