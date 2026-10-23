@@ -1,9 +1,9 @@
 {
-  "id": "/Racket-Rankings/",
+  "id": "/Racket-Rankings/?app=racket-rankings",
   "name": "Racket Rankings",
   "short_name": "Rankings",
   "description": "Personal tennis and padel results, rankings and next opponents",
-  "start_url": "./",
+  "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
