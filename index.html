@@ -207,7 +207,9 @@ async function loadSync(){
     const r=await fetch('data.json?'+Date.now());if(!r.ok)throw new Error(r.status);
     const d=await r.json();
     d.rankings.forEach(rk=>{const x=db.rankings.find(y=>y.id===rk.id);if(x){x.note=rk.note;x.sport=rk.sport;x.synced=true}else db.rankings.push({...rk,synced:true})});
-    db.matches=db.matches.filter(m=>!m.ext).concat(d.matches.map(m=>({ts:Date.parse(m.date)||0,...m,id:m.ext})));
+    const syncedM=d.matches.map(m=>({ts:Date.parse(m.date)||0,...m,id:m.ext}));
+    const dup=m=>m.planKey&&syncedM.some(x=>x.rankingId===m.rankingId&&x.notes===m.notes&&plain(x.opponents[0])===plain(m.opponents[0]));   // the club site has caught up with a result you entered
+    db.matches=db.matches.filter(m=>!m.ext&&!dup(m)).concat(syncedM);
     sync={upcoming:d.upcoming||[],standings:d.standings||[],groups:d.groups||[],scouting:d.scouting||{},generated:d.generated,status:'ok',player:d.player};
     save();
   }catch(e){sync.status='no data.json ('+e.message+')'}
@@ -347,19 +349,28 @@ function resultMail(u,p){
   const body=rtpl.replace(/\{opponent\}/g,u.opponent).replace(/\{score\}/g,score).replace(/\{label\}/g,u.label).replace(/\{me\}/g,sync.player||'');
   return {to,body,href:`mailto:${to}?subject=${encodeURIComponent('Resultado '+u.label)}&body=${encodeURIComponent(body)}`};
 }
+function syncPlanMatch(u){                                                // a result you entered counts in your stats straight away
+  const k=planKey(u),p=plans[k]||{},id='plan:'+k;
+  db.matches=db.matches.filter(m=>m.id!==id);
+  if(p.status==='played'&&(p.outcome==='lost'||(p.outcome==='won'&&p.score))){
+    db.matches.push({id,planKey:k,ts:Date.now(),date:p.when?p.when.slice(0,10):today(),rankingId:u.rankingId,type:'singles',partner:'',opponents:[u.opponent],
+      score:(p.score||'').trim(),result:p.outcome==='won'?'W':'L',notes:u.label});
+  }
+  save();
+}
 function resultBlock(u,p){
   if(p.status!=='played')return '';
-  const out=p.outcome||'';
+  const out=p.outcome||'',i=sync.upcoming.indexOf(u);
   let h=`<label>How did it go?</label><select data-plan="outcome"><option value="">Choose…</option><option value="won" ${out==='won'?'selected':''}>I won</option><option value="lost" ${out==='lost'?'selected':''}>I lost</option></select>`;
-  if(out==='lost')h+='<div class="mute small" style="margin-top:6px">Only the winner reports the result, so there is nothing to send.</div>';
-  if(out==='won'){
-    h+=`<label>Score, your games first (e.g. 6-3 6-4)</label><input data-plan="score" value="${esc(p.score||'')}" placeholder="6-3 6-4" autocomplete="off">`;
-    const m=resultMail(u,p);
-    h+=!m.to?'<div class="mute small" style="margin-top:6px">No result email is set for this ranking. Add it on the <a href="#/data">Data page</a>.</div>'
-      :p.score?`<div class="cbtn" style="margin-top:8px"><a class="btn" href="${m.href}">✉ Email result to ${esc(m.to)}</a></div><div class="mute small">“${esc(m.body)}”</div>`
-      :'<div class="mute small" style="margin-top:6px">Enter the score to prepare the email.</div>';
-  }
-  return h;
+  if(!out)return h;
+  h+=`<label>Score, your games first (e.g. ${out==='won'?'6-3 6-4':'3-6 4-6'})${out==='lost'?' <span class="mute">(optional)</span>':''}</label><input data-plan="score" value="${esc(p.score||'')}" placeholder="${out==='won'?'6-3 6-4':'3-6 4-6'}" autocomplete="off">`;
+  if(out==='lost')return h+`<div class="mute small" style="margin-top:6px">Only the winner reports the result, so there is nothing to send.</div>
+    <div class="cbtn" style="margin-top:8px"><button class="btn" data-act="markdone" data-u="${i}">✓ Done, remove from Next up</button></div>`;
+  const m=resultMail(u,p);
+  return h+(!m.to?'<div class="mute small" style="margin-top:6px">No result email is set for this ranking. Add it on the <a href="#/data">Data page</a>.</div>'
+      +`<div class="cbtn" style="margin-top:8px"><button class="btn" data-act="markdone" data-u="${i}">✓ Reported, remove from Next up</button></div>`
+    :p.score?`<div class="cbtn" style="margin-top:8px"><a class="btn" data-act="emailresult" data-u="${i}" href="${m.href}">✉ Email result to ${esc(m.to)}</a><button class="btn" data-act="markdone" data-u="${i}">✓ Already reported</button></div><div class="mute small">“${esc(m.body)}”. Once you send it, the opponent leaves Next up.</div>`
+    :'<div class="mute small" style="margin-top:6px">Enter the score to prepare the email.</div>');
 }
 function planControls(u,i){
   const p=plans[planKey(u)]||{};
@@ -371,6 +382,13 @@ function planControls(u,i){
     <label>Note</label><input data-plan="note" value="${esc(p.note||'')}" placeholder="e.g. court 3, bring balls" autocomplete="off">
     ${resultBlock(u,p)}
     <div style="margin-top:10px">${calRows(u,i,p)}</div></div>`;
+}
+const isDone=u=>{const p=plans[planKey(u)]||{};return p.status==='played'&&!!p.outcome&&!!p.done};
+function doneRow(u,i){
+  const p=plans[planKey(u)]||{};
+  return `<div class="mrow" style="padding:8px 0"><span class="chip ${p.outcome==='won'?'W':'L'}">${p.outcome==='won'?'W':'L'}</span>
+    <div class="mmain"><div class="mopp">${esc(u.opponent)}</div><div class="mute small">${esc(u.label)}${p.score?' · '+esc(p.score):''} · ${p.outcome==='won'?'reported':'done'}. It leaves this list once the club site shows it.</div></div>
+    <div class="macts"><button class="sm" data-act="undodone" data-u="${i}">Undo</button></div></div>`;
 }
 function oppStanding(u){
   const g=sync.groups.find(x=>x.rankingId===u.rankingId&&x.current);if(!g)return '';
@@ -404,15 +422,17 @@ function upRow(u,single){
     </div></details>`;
 }
 function nextUp(){
-  const ups=visibleUpcoming();
-  if(!ups.length)return '';
+  const all=visibleUpcoming();
+  if(!all.length)return '';
+  const ups=all.filter(u=>!isDone(u)),done=all.filter(isDone);
   const sorted=ups.slice().sort((a,b)=>(a.deadline||'9').localeCompare(b.deadline||'9')||(a.jornada||0)-(b.jornada||0)||a.opponent.localeCompare(b.opponent));
   const rids=[...new Set(sorted.map(u=>u.rankingId))];
-  return `<div class="card"><h2>Next up</h2>`+rids.map(rid=>{
+  return `<div class="card"><h2>Next up</h2>`+(sorted.length?rids.map(rid=>{
     const r=db.rankings.find(x=>x.id===rid)||{name:rid},items=sorted.filter(u=>u.rankingId===rid);
     const g=sync.groups.find(x=>x.rankingId===rid&&x.current);
     return (rids.length>1||items.length>1?`<div class="uphead">${esc(r.name)}${g?' · '+esc(g.name):''}</div>`:'')+items.map(u=>upRow(u,sorted.length===1)).join('');
-  }).join('')+'</div>';
+  }).join(''):'<div class="mute small" style="padding:4px 0">All caught up ✓</div>')
+  +(done.length?`<details data-open="done" ${ui.open&&ui.open.done?'open':''} style="margin-top:8px"><summary class="small" style="cursor:pointer;color:var(--mute);min-height:32px">Done · ${done.length}</summary>${done.map(u=>doneRow(u,sync.upcoming.indexOf(u))).join('')}</details>`:'')+'</div>';
 }
 function contactBlock(name,i){
   const c=findContact(name);
@@ -895,6 +915,8 @@ document.addEventListener('click',e=>{
   else if(act==='resettpl'){msgTpl=DEFAULT_TPL;msgTpl2=DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);render();toast('Messages reset')}
   else if(act==='savertpl'){rtpl=$('#rtplBox').value.trim()||DEFAULT_RTPL;lsSet('.rtpl',rtpl);toast('Email text saved ✓')}
   else if(act==='resetrtpl'){rtpl=DEFAULT_RTPL;lsSet('.rtpl',rtpl);render();toast('Email text reset')}
+  else if(act==='markdone'||act==='emailresult'){const u=sync.upcoming[+b.dataset.u],k=planKey(u);plans[k]={...plans[k],done:true};lsSet('.plans',plans);syncPlanMatch(u);setTimeout(render,act==='emailresult'?500:0);if(act==='markdone')toast('Moved to Done ✓')}
+  else if(act==='undodone'){const u=sync.upcoming[+b.dataset.u],k=planKey(u);plans[k]={...plans[k],done:false};lsSet('.plans',plans);render()}
   else if(act==='cal-match')calMatch(sync.upcoming[+b.dataset.u]);
   else if(act==='cal-deadline')calDeadline(sync.upcoming[+b.dataset.u]);
   else if(act==='cal-book')calBooking(sync.upcoming[+b.dataset.u]);
@@ -922,7 +944,10 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   const t=e.target.id;
   if(e.target.dataset.plan){const u=sync.upcoming[+e.target.closest('[data-u]').dataset.u],k=planKey(u);
-    plans[k]={...plans[k],[e.target.dataset.plan]:e.target.value};lsSet('.plans',plans);render();return}
+    const nk=e.target.dataset.plan,prevP=plans[k]||{};
+    plans[k]={...prevP,[nk]:e.target.value};
+    if(['status','outcome','score'].includes(nk)&&prevP.done)plans[k].done=false;   // changing the result re-opens it
+    lsSet('.plans',plans);syncPlanMatch(u);render();return}
   if(e.target.dataset.rmail!==undefined){rmail[e.target.dataset.rmail]=e.target.value.trim();lsSet('.rmail',rmail);toast('Email saved ✓');return}
   if(t==='oppNote'){const k=e.target.dataset.opp;if(e.target.value.trim())notes[k]=e.target.value.trim();else delete notes[k];lsSet('.notes',notes);toast('Note saved ✓');return}
   if(t==='mr'){ui.mRank=e.target.value;fillMatches()}
