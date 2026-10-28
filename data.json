@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-22T10:59:46.120Z",
+ "generated": "2026-10-28T11:59:06.342Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -504,123 +504,137 @@
    "result": "L",
    "notes": "Cuadro 425 · Serie 1",
    "pos": 98
+  },
+  {
+   "ext": "cdc:426:98-101",
+   "date": "2026-10-27",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Manuel de Castro Zurita"
+   ],
+   "score": "2-6 1-6",
+   "result": "L",
+   "notes": "Cuadro 426 · Serie 3",
+   "pos": 98
   }
  ],
  "upcoming": [
   {
    "rankingId": "cdc",
-   "opponent": "Manuel de Castro Zurita",
-   "deadline": "2026-10-27",
-   "label": "Cuadro 426 · Serie 3",
-   "myPos": 98,
-   "oppPos": 101
+   "opponent": "Iván López-Belmonte Encina",
+   "deadline": "2026-11-10",
+   "label": "Cuadro 427 · Serie 5",
+   "myPos": 101,
+   "oppPos": 106
   }
  ],
  "standings": [
   {
    "rankingId": "cdc",
    "kind": "ladder",
-   "label": "Cuadro 426 · Serie 3",
-   "pos": 98,
+   "label": "Cuadro 427 · Serie 5",
+   "pos": 101,
    "of": 216,
-   "cuadro": 426
+   "cuadro": 427
   }
  ],
  "scouting": {
-  "manuel de castro zurita": {
-   "name": "Manuel de Castro Zurita",
+  "ivan lopez belmonte encina": {
+   "name": "Iván López-Belmonte Encina",
    "source": "cuadros",
-   "pos": 101,
+   "pos": 106,
    "matches": [
+    {
+     "date": "2026-10-27",
+     "label": "Cuadro 426 · Serie 3",
+     "vs": "Jose Alvarez Alfaro",
+     "vsPos": 106,
+     "theirPos": 109,
+     "score": "6-3 6-4",
+     "result": "W"
+    },
+    {
+     "date": "2026-10-13",
+     "label": "Cuadro 425 · Serie 1",
+     "vs": "Elías Navas Martín",
+     "vsPos": 110,
+     "theirPos": 109,
+     "score": "7-6 5-7 7-6",
+     "result": "W"
+    },
     {
      "date": "2026-06-30",
      "label": "Cuadro 424 · Serie 3",
-     "vs": "Leopoldo Fabra Cadenas",
-     "vsPos": 94,
-     "theirPos": 97,
-     "score": "6-4 (2-0) ret.",
+     "vs": "Manuel Ruiz Esquivias",
+     "vsPos": 107,
+     "theirPos": 104,
+     "score": "2-6 7-6 6-3",
      "result": "W"
     },
     {
      "date": "2026-06-16",
      "label": "Cuadro 423 · Serie 1",
-     "vs": "Carlos Antón Muñoz",
-     "vsPos": 98,
-     "theirPos": 97,
-     "score": "3-6 6-0 10-5",
-     "result": "W"
+     "vs": "Adolfo García Torrubia",
+     "vsPos": 104,
+     "theirPos": 103,
+     "score": "ret.",
+     "result": "L"
     },
     {
      "date": "2026-05-19",
      "label": "Cuadro 421 · Serie 5",
-     "vs": "Javier Parreño Santa-Olalla",
-     "vsPos": 97,
-     "theirPos": 102,
-     "score": "1-6 7-5 10-8",
+     "vs": "Iñigo Peñaranda Real",
+     "vsPos": 91,
+     "theirPos": 96,
+     "score": "2-6 4-6",
+     "result": "L"
+    },
+    {
+     "date": "2026-05-05",
+     "label": "Cuadro 420 · Serie 3",
+     "vs": "Jose Alvarez Alfaro",
+     "vsPos": 99,
+     "theirPos": 96,
+     "score": "6-1 6-3",
      "result": "W"
     },
     {
      "date": "2026-04-21",
      "label": "Cuadro 419 · Serie 1",
-     "vs": "Elías Navas Martín",
-     "vsPos": 105,
-     "theirPos": 106,
-     "score": "6-3 6-3",
-     "result": "W"
+     "vs": "Carlos Gómez-Múgica de La Rica",
+     "vsPos": 96,
+     "theirPos": 95,
+     "score": "4-6 4-6",
+     "result": "L"
     },
     {
      "date": "2026-04-07",
      "label": "Cuadro 418 · Serie 7",
-     "vs": "Carlos Antón Muñoz",
-     "vsPos": 106,
-     "theirPos": 113,
-     "score": "6-2 7-5",
-     "result": "W"
+     "vs": "José María Gil-Delgado",
+     "vsPos": 88,
+     "theirPos": 95,
+     "score": "5-7 1-6",
+     "result": "L"
     },
     {
      "date": "2026-03-17",
      "label": "Cuadro 417 · Serie 5",
-     "vs": "Pedro Fernández-Amatriain",
-     "vsPos": 113,
-     "theirPos": 118,
-     "score": "6-3 6-0",
+     "vs": "Daniel Muñoz Almazán",
+     "vsPos": 100,
+     "theirPos": 95,
+     "score": "6-2 6-4",
      "result": "W"
     },
     {
      "date": "2026-03-03",
      "label": "Cuadro 416 · Serie 3",
-     "vs": "Javier Renedo Anglada",
-     "vsPos": 121,
-     "theirPos": 118,
-     "score": "6-4 7-5",
-     "result": "W"
-    },
-    {
-     "date": "2026-02-17",
-     "label": "Cuadro 415 · Serie 1",
-     "vs": "Angel Arbona Abascal",
-     "vsPos": 117,
-     "theirPos": 118,
-     "score": "ret.",
+     "vs": "Ignacio Moreno Zapatero",
+     "vsPos": 92,
+     "theirPos": 95,
+     "score": "4-6 4-6",
      "result": "L"
-    },
-    {
-     "date": "2026-01-27",
-     "label": "Cuadro 414 · Serie 7",
-     "vs": "Luis Riesgo Pérez",
-     "vsPos": 125,
-     "theirPos": 118,
-     "score": "7-4",
-     "result": "W"
-    },
-    {
-     "date": "2025-12-23",
-     "label": "Cuadro 412 · Serie 3",
-     "vs": "Javier Renedo Anglada",
-     "vsPos": 118,
-     "theirPos": 121,
-     "score": "7-6 6-3",
-     "result": "W"
     }
    ]
   }
