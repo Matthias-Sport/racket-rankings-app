@@ -12,6 +12,12 @@
    "name": "Ranking Club de Campo",
    "sport": "tennis",
    "note": "The site does not publish exact match dates, so each match is dated to the end of its cuadro's play window. Position is your ladder number in that cuadro (lower is better)."
+  },
+  {
+   "id": "ptg",
+   "name": "PTG (Padel Team Gourmet)",
+   "sport": "padel",
+   "note": "Padel ranking at app.padelteamgourmet.com (member login). Matches are entered by hand with + Match; there is no automatic import."
   }
  ],
  "matches": [

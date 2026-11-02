@@ -147,6 +147,7 @@ async function scrapeCCVM(prevMatches = []) {
 }
 
 /* ---------- Ranking Club de Campo (rankingclubdecampo.es) ---------- */
+const PTG = { id: 'ptg', name: 'PTG (Padel Team Gourmet)', sport: 'padel', note: 'Padel ranking at app.padelteamgourmet.com (member login). Matches are entered by hand with + Match; there is no automatic import.' };
 const CDC = { id: 'cdc', name: 'Ranking Club de Campo', sport: 'tennis', note: 'The site does not publish exact match dates, so each match is dated to the end of its cuadro\'s play window. Position is your ladder number in that cuadro (lower is better).' };
 const MONTHS = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
 const cellText = h => h.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -236,7 +237,7 @@ const cdc = await scrapeCDC();
 const matches = [...ccvm.matches, ...cdc.matches].sort((a, b) => (a.date + a.ext).localeCompare(b.date + b.ext));
 const out = {
   generated: new Date().toISOString(), player: NAME,
-  rankings: [CCVM, CDC],
+  rankings: [CCVM, CDC, PTG],
   matches,
   upcoming: [...ccvm.upcoming, ...cdc.upcoming],
   standings: cdc.standings,                                              // ladder position per ranking

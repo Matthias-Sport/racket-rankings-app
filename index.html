@@ -55,6 +55,7 @@ th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertic
 th{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 [hidden]{display:none!important}
+.ninp{margin-top:6px}
 td.d{white-space:nowrap}
 .uphead{font-size:12px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 0}
 .uprow{border-top:1px solid var(--line)}.uphead+.uprow{border-top:0}
@@ -139,10 +140,10 @@ label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
   <select id="f_type" hidden><option value="singles">Singles</option><option value="doubles">Doubles</option></select>
   <select id="f_res" hidden><option value="W">Win</option><option value="L">Loss</option></select>
   <div class="seg" data-for="f_type"><button type="button" data-v="singles">Singles</button><button type="button" data-v="doubles">Doubles</button></div>
-  <div id="partnerBox"><label>Your partner</label><input id="f_partner" list="dl_names" autocomplete="off"></div>
+  <div id="partnerBox"><label>Your partner</label><select class="nsel" data-for="f_partner"></select><input id="f_partner" class="ninp" placeholder="Partner's name" autocomplete="off" hidden></div>
   <div class="two">
-    <div><label id="oppLabel">Opponent</label><input id="f_opp1" list="dl_names" autocomplete="off" required></div>
-    <div id="opp2Box"><label>Opponent 2</label><input id="f_opp2" list="dl_names" autocomplete="off"></div>
+    <div><label id="oppLabel">Opponent</label><select class="nsel" data-for="f_opp1"></select><input id="f_opp1" class="ninp" placeholder="New opponent's name" autocomplete="off" hidden></div>
+    <div id="opp2Box"><label>Opponent 2</label><select class="nsel" data-for="f_opp2"></select><input id="f_opp2" class="ninp" placeholder="New opponent's name" autocomplete="off" hidden></div>
   </div>
   <label>Score, your games first (e.g. 6-4 3-6 10-8)</label>
   <input id="f_score" placeholder="6-4 3-6 10-8" autocomplete="off">
@@ -741,6 +742,34 @@ function formSport(){
   if(v==='friendly-tennis')return 'tennis';
   return (db.rankings.find(r=>r.id===v)||{}).sport||'tennis';
 }
+/* ---------- pick an existing opponent/partner or add a new one ---------- */
+function nameLists(){
+  const recent=[],canon=new Map();
+  desc(db.matches).forEach(m=>{
+    (m.opponents||[]).forEach(n=>{if(n&&!recent.some(r=>oppKey(r)===oppKey(n)))recent.push(n)});
+    [m.partner,...(m.opponents||[])].forEach(n=>{if(n&&!canon.has(oppKey(n)))canon.set(oppKey(n),n.trim())});     // most recent spelling wins
+  });
+  const all=[...canon.values()].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  return {recent:recent.slice(0,8),all};
+}
+function fillNameSelect(sel,value){
+  const {recent,all}=nameLists(),input=$('#'+sel.dataset.for),v=String(value||'').trim();
+  const opt=n=>`<option value="${esc(n)}">${esc(n)}</option>`;
+  sel.innerHTML=`<option value="">${sel.dataset.for==='f_partner'?'No partner / choose…':'Choose opponent…'}</option>`
+    +(recent.length&&sel.dataset.for!=='f_partner'?`<optgroup label="Recent">${recent.map(opt).join('')}</optgroup>`:'')
+    +(all.length?`<optgroup label="All (A–Z)">${all.map(opt).join('')}</optgroup>`:'')+'<option value="__new">＋ New person…</option>';
+  const known=v&&all.find(n=>oppKey(n)===oppKey(v));
+  if(!v){sel.value='';input.value='';input.hidden=true}
+  else if(known){sel.value=known;input.value=known;input.hidden=true}
+  else{sel.value='__new';input.value=v;input.hidden=false}
+}
+function initNameSelects(){document.querySelectorAll('.nsel').forEach(sel=>fillNameSelect(sel,$('#'+sel.dataset.for).value))}
+document.addEventListener('change',e=>{
+  const sel=e.target.closest&&e.target.closest('.nsel');if(!sel)return;
+  const input=$('#'+sel.dataset.for);
+  if(sel.value==='__new'){input.hidden=false;input.value='';input.focus()}
+  else{input.hidden=true;input.value=sel.value}
+});
 function syncForm(){
   const d=$('#f_type').value==='doubles';
   $('#partnerBox').hidden=!d;$('#opp2Box').hidden=!d;$('#oppLabel').textContent=d?'Opponent 1':'Opponent';
@@ -766,7 +795,7 @@ function openDialog(m){
   $('#f_opp1').value=m?.opponents?.[0]||'';$('#f_opp2').value=m?.opponents?.[1]||'';
   $('#f_score').value=m?.score||'';$('#f_res').value=m?.result||'W';$('#f_notes').value=m?.notes||'';
   $('#f_rkname').value='';
-  syncForm();dlg.showModal();$('#f_opp1').focus();
+  initNameSelects();syncForm();dlg.showModal();$('select[data-for=f_opp1]').focus();
 }
 $('#f_type').onchange=syncForm;
 $('#f_rank').onchange=()=>{if(formSport()==='padel')$('#f_type').value='doubles';syncForm()};
@@ -777,6 +806,7 @@ dlg.addEventListener('click',e=>{const b=e.target.closest('.seg button');if(!b)r
 $('#cancel').onclick=()=>dlg.close();
 $('#mf').onsubmit=e=>{
   e.preventDefault();
+  if(!$('#f_opp1').value.trim()){toast('Choose an opponent, or add a new one');$('select[data-for=f_opp1]').focus();return}
   const more=e.submitter&&e.submitter.id==='saveMore';
   let rid=$('#f_rank').value;
   if(rid==='__new'){
@@ -798,7 +828,7 @@ $('#mf').onsubmit=e=>{
 };
 function openDialogKeep(rid,rec){
   dlg.close();openDialog();
-  $('#f_rank').value=rid;$('#f_type').value=rec.type;$('#f_partner').value=rec.partner;$('#f_date').value=rec.date;syncForm();$('#f_opp1').focus();
+  $('#f_rank').value=rid;$('#f_type').value=rec.type;$('#f_partner').value=rec.partner;$('#f_date').value=rec.date;initNameSelects();syncForm();$('select[data-for=f_opp1]').focus();
 }
 
 /* ---------- csv / json ---------- */
