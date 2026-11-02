@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-28T11:59:06.342Z",
+ "generated": "2026-11-02T11:37:34.917Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -648,78 +648,69 @@
  "groups": [
   {
    "rankingId": "ccvm",
-   "phase": 269,
-   "name": "Grupo D",
-   "start": "2026-07-27",
-   "end": "2026-08-31",
+   "phase": 266,
+   "name": "Grupo 4",
+   "start": "2026-05-07",
+   "end": "2026-06-14",
    "current": false,
    "players": [
     {
      "name": "Jesús Quesada Ruiz",
      "pos": 1,
-     "pts": 0,
-     "pj": 0,
-     "pg": 0,
-     "pp": 0,
-     "sg": 0,
-     "sp": 0,
-     "jg": 0,
-     "jp": 0,
+     "pts": 7,
+     "pj": 3,
+     "pg": 2,
+     "pp": 1,
+     "sg": 5,
+     "sp": 2,
+     "jg": 40,
+     "jp": 23,
      "me": false
     },
     {
      "name": "Fco. Javier Trillo Osuna",
      "pos": 2,
-     "pts": 0,
-     "pj": 0,
-     "pg": 0,
+     "pts": 6,
+     "pj": 2,
+     "pg": 2,
      "pp": 0,
-     "sg": 0,
-     "sp": 0,
-     "jg": 0,
-     "jp": 0,
+     "sg": 4,
+     "sp": 1,
+     "jg": 29,
+     "jp": 25,
      "me": false
     },
     {
      "name": "Matthias Homan",
      "pos": 3,
-     "pts": 0,
-     "pj": 0,
-     "pg": 0,
-     "pp": 0,
-     "sg": 0,
-     "sp": 0,
-     "jg": 0,
-     "jp": 0,
+     "pts": 5,
+     "pj": 3,
+     "pg": 1,
+     "pp": 2,
+     "sg": 2,
+     "sp": 4,
+     "jg": 26,
+     "jp": 31,
      "me": true
     },
     {
      "name": "Ignacio Reiris Rico",
      "pos": 4,
-     "pts": 0,
-     "pj": 0,
+     "pts": 2,
+     "pj": 2,
      "pg": 0,
-     "pp": 0,
+     "pp": 2,
      "sg": 0,
-     "sp": 0,
-     "jg": 0,
-     "jp": 0,
-     "me": false
-    },
-    {
-     "name": "Alfonso Najera del Barrio",
-     "pos": 5,
-     "pts": 0,
-     "pj": 0,
-     "pg": 0,
-     "pp": 0,
-     "sg": 0,
-     "sp": 0,
-     "jg": 0,
-     "jp": 0,
+     "sp": 4,
+     "jg": 8,
+     "jp": 24,
      "me": false
     }
-   ]
+   ],
+   "overall": {
+    "pos": 18,
+    "of": 84
+   }
   }
  ]
 }

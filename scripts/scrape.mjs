@@ -83,7 +83,8 @@ async function scrapeCCVM(prevMatches = []) {
       const d = await ccvmApi({ codigo: g.codigo, accion: 'recuperarGrupo' });
       await sleep(100);
       const label = `Fase ${fase} · ${g.nombreGrupo}`;
-      if (!lastGroup) {
+      const playedInGroup = (d.grupo?.jugadores || []).reduce((n, j) => n + (j.PJ || 0), 0);
+      if (!lastGroup && (iso(g.fechaFin) >= TODAY || playedInGroup > 0)) {      // skip drawn-but-empty groups (e.g. a division final with no results published)
         const players = (d.grupo?.jugadores || []).map(j => ({
           name: tidy(j.nombreCuadro), pos: j.posicion || 0, pts: j.puntos || 0, pj: j.PJ || 0, pg: j.PG || 0, pp: j.PP || 0,
           sg: j.SG || 0, sp: j.SP || 0, jg: j.JG || 0, jp: j.JP || 0, me: j.codigo === me.codigo,
