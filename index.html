@@ -209,12 +209,18 @@ async function loadSync(){
     const d=await r.json();
     d.rankings.forEach(rk=>{const x=db.rankings.find(y=>y.id===rk.id);if(x){x.note=rk.note;x.sport=rk.sport;x.synced=true}else db.rankings.push({...rk,synced:true})});
     const syncedM=d.matches.map(m=>({ts:Date.parse(m.date)||0,...m,id:m.ext}));
-    const dup=m=>m.planKey&&syncedM.some(x=>x.rankingId===m.rankingId&&x.notes===m.notes&&plain(x.opponents[0])===plain(m.opponents[0]));   // the club site has caught up with a result you entered
-    db.matches=db.matches.filter(m=>!m.ext&&!dup(m)).concat(syncedM);
-    sync={upcoming:d.upcoming||[],standings:d.standings||[],groups:d.groups||[],scouting:d.scouting||{},generated:d.generated,status:'ok',player:d.player};
+    // A hand-entered match is dropped once the club site lists the same match: same ranking, same opponent, same result, dates within 21 days
+    // (the club sites give a window-end date, so the date you typed can be a bit earlier). The official version always wins.
+    const day=x=>Date.parse(x)/864e5;
+    const dup=m=>m.type==='singles'&&syncedM.some(x=>x.rankingId===m.rankingId&&plain((x.opponents||[])[0])===plain((m.opponents||[])[0])&&(
+      (m.planKey&&x.notes===m.notes)||(x.result===m.result&&Math.abs(day(x.date)-day(m.date))<=21)));
+    const manual=db.matches.filter(m=>!m.ext),replaced=manual.filter(dup).length;
+    db.matches=manual.filter(m=>!dup(m)).concat(syncedM);
+    sync={upcoming:d.upcoming||[],standings:d.standings||[],groups:d.groups||[],scouting:d.scouting||{},generated:d.generated,status:'ok',player:d.player,replaced};
     save();
   }catch(e){sync.status='no data.json ('+e.message+')'}
   render();
+  if(sync.replaced)toast(`${sync.replaced} hand-entered match${sync.replaced===1?'':'es'} replaced by the official result`);
 }
 
 /* ---------- stats ---------- */
@@ -670,7 +676,7 @@ function pageRanking(id){
 function pageData(){
   return `<h1>Data</h1>
   <div class="card"><h2>Synced results</h2>
-  <p class="small" style="margin:0 0 6px">${sync.status==='ok'?`Loaded <b>${db.matches.filter(m=>m.ext).length}</b> matches for ${esc(sync.player||'you')} from <code>data.json</code>, generated ${esc(sync.generated.slice(0,16).replace('T',' '))} UTC.`:`<span class="mute">${esc(sync.status)}</span>`}</p>
+  <p class="small" style="margin:0 0 6px">${sync.status==='ok'?`Loaded <b>${db.matches.filter(m=>m.ext).length}</b> matches for ${esc(sync.player||'you')} from <code>data.json</code>${sync.replaced?` (${sync.replaced} hand-entered ${sync.replaced===1?'match was':'matches were'} replaced by the official result)`:''}, generated ${esc(sync.generated.slice(0,16).replace('T',' '))} UTC.`:`<span class="mute">${esc(sync.status)}</span>`}</p>
   <p class="mute small" style="margin:0 0 10px">Refresh with <code>node scripts/scrape.mjs</code> (CCVM tennis and Club de Campo). On GitHub it can run daily by itself, see README.</p>
   <button data-act="resync">Reload data.json</button></div>
   <div class="card"><h2>Contacts</h2>
