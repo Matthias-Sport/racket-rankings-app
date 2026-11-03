@@ -415,7 +415,7 @@ function upRow(u,single){
     <div class="upbody">
       ${u.myPos||u.oppPos?`<div class="small">Ladder position: you <b>#${u.myPos||'?'}</b> · ${esc(u.opponent.split(' ')[0])} <b>#${u.oppPos||'?'}</b></div>`:''}
       <div class="small" style="margin-top:4px">${esc(u.label)}</div>
-      <div class="small" style="margin-top:4px">${s.p?`Head-to-head <b>${rec(s)}</b>, last ${esc(desc(past)[0].date)}`:'First meeting'}</div>
+      ${s.p?`<div style="margin-top:8px"><div class="small"><b>Head-to-head ${rec(s)}</b> · sets ${s.sw}–${s.sl} · games ${s.gw}–${s.gl}</div>${matchTable(desc(past).slice(0,5),{edit:false,showRank:true})}<div class="small" style="margin-top:2px"><a href="#/opponents/${encodeURIComponent(u.opponent)}">All meetings and stats →</a></div></div>`:'<div class="small" style="margin-top:4px">First meeting</div>'}
       ${note?`<div class="small" style="margin-top:4px">📝 ${esc(note)}</div>`:''}
       <div style="margin-top:8px">${contactBlock(u.opponent,i)}</div>
       ${planControls(u,i)}
