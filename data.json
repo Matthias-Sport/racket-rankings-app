@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-02T11:37:34.917Z",
+ "generated": "2026-11-03T13:18:30.603Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -121,6 +121,7 @@
   },
   {
    "ext": "ccvm:35891",
+   "phase": 237,
    "date": "2025-09-23",
    "rankingId": "ccvm",
    "type": "singles",
@@ -130,11 +131,11 @@
    ],
    "score": "6-2 7-6",
    "result": "W",
-   "notes": "Fase 237 · Grupo 6 · Jornada 2",
-   "phase": 237
+   "notes": "Fase 237 · Grupo 6 · Jornada 2"
   },
   {
    "ext": "ccvm:35895",
+   "phase": 237,
    "date": "2025-09-25",
    "rankingId": "ccvm",
    "type": "singles",
@@ -144,11 +145,11 @@
    ],
    "score": "3-6 3-6",
    "result": "L",
-   "notes": "Fase 237 · Grupo 6 · Jornada 3",
-   "phase": 237
+   "notes": "Fase 237 · Grupo 6 · Jornada 3"
   },
   {
    "ext": "ccvm:35889",
+   "phase": 237,
    "date": "2025-10-13",
    "rankingId": "ccvm",
    "type": "singles",
@@ -158,8 +159,7 @@
    ],
    "score": "6-3 6-0",
    "result": "W",
-   "notes": "Fase 237 · Grupo 6 · Jornada 1",
-   "phase": 237
+   "notes": "Fase 237 · Grupo 6 · Jornada 1"
   },
   {
    "ext": "cdc:407:111-112",
@@ -191,6 +191,7 @@
   },
   {
    "ext": "ccvm:36897",
+   "phase": 241,
    "date": "2025-11-05",
    "rankingId": "ccvm",
    "type": "singles",
@@ -200,8 +201,7 @@
    ],
    "score": "5-7 5-7",
    "result": "L",
-   "notes": "Fase 241 · Grupo 5 · Jornada 3",
-   "phase": 241
+   "notes": "Fase 241 · Grupo 5 · Jornada 3"
   },
   {
    "ext": "cdc:409:115-120",
@@ -233,6 +233,7 @@
   },
   {
    "ext": "ccvm:36903",
+   "phase": 241,
    "date": "2025-12-12",
    "rankingId": "ccvm",
    "type": "singles",
@@ -242,8 +243,7 @@
    ],
    "score": "6-0 6-2",
    "result": "W",
-   "notes": "Fase 241 · Grupo 5 · Jornada 5",
-   "phase": 241
+   "notes": "Fase 241 · Grupo 5 · Jornada 5"
   },
   {
    "ext": "cdc:413:115-120",
@@ -261,6 +261,7 @@
   },
   {
    "ext": "ccvm:38765",
+   "phase": 244,
    "date": "2026-02-01",
    "rankingId": "ccvm",
    "type": "singles",
@@ -270,11 +271,11 @@
    ],
    "score": "8-6",
    "result": "W",
-   "notes": "Fase 244 · Grupo 5 · Jornada 1",
-   "phase": 244
+   "notes": "Fase 244 · Grupo 5 · Jornada 1"
   },
   {
    "ext": "ccvm:38773",
+   "phase": 244,
    "date": "2026-02-01",
    "rankingId": "ccvm",
    "type": "singles",
@@ -284,8 +285,7 @@
    ],
    "score": "10-3",
    "result": "W",
-   "notes": "Fase 244 · Grupo 5 · Jornada 3",
-   "phase": 244
+   "notes": "Fase 244 · Grupo 5 · Jornada 3"
   },
   {
    "ext": "cdc:415:115-116",
@@ -303,6 +303,7 @@
   },
   {
    "ext": "ccvm:39491",
+   "phase": 246,
    "date": "2026-02-23",
    "rankingId": "ccvm",
    "type": "singles",
@@ -312,8 +313,7 @@
    ],
    "score": "6-4 6-2",
    "result": "W",
-   "notes": "Fase 246 · Grupo 5 · Jornada 1",
-   "phase": 246
+   "notes": "Fase 246 · Grupo 5 · Jornada 1"
   },
   {
    "ext": "cdc:416:112-115",
@@ -331,6 +331,7 @@
   },
   {
    "ext": "ccvm:39497",
+   "phase": 246,
    "date": "2026-03-06",
    "rankingId": "ccvm",
    "type": "singles",
@@ -340,11 +341,11 @@
    ],
    "score": "6-2 6-0",
    "result": "W",
-   "notes": "Fase 246 · Grupo 5 · Jornada 2",
-   "phase": 246
+   "notes": "Fase 246 · Grupo 5 · Jornada 2"
   },
   {
    "ext": "ccvm:39507",
+   "phase": 246,
    "date": "2026-03-22",
    "rankingId": "ccvm",
    "type": "singles",
@@ -354,8 +355,7 @@
    ],
    "score": "3-6 4-6",
    "result": "L",
-   "notes": "Fase 246 · Grupo 5 · Jornada 5",
-   "phase": 246
+   "notes": "Fase 246 · Grupo 5 · Jornada 5"
   },
   {
    "ext": "cdc:418:100-107",
@@ -373,6 +373,7 @@
   },
   {
    "ext": "ccvm:40217",
+   "phase": 248,
    "date": "2026-05-03",
    "rankingId": "ccvm",
    "type": "singles",
@@ -382,11 +383,11 @@
    ],
    "score": "6-1",
    "result": "W",
-   "notes": "Fase 248 · Grupo 4 · Jornada 3",
-   "phase": 248
+   "notes": "Fase 248 · Grupo 4 · Jornada 3"
   },
   {
    "ext": "ccvm:40219",
+   "phase": 248,
    "date": "2026-05-03",
    "rankingId": "ccvm",
    "type": "singles",
@@ -396,8 +397,7 @@
    ],
    "score": "6-1 6-4",
    "result": "W",
-   "notes": "Fase 248 · Grupo 4 · Jornada 4",
-   "phase": 248
+   "notes": "Fase 248 · Grupo 4 · Jornada 4"
   },
   {
    "ext": "cdc:421:103-108",
@@ -528,6 +528,51 @@
  ],
  "upcoming": [
   {
+   "rankingId": "ccvm",
+   "opponent": "Lucas Ayuso Cortina",
+   "deadline": "2027-01-07",
+   "label": "Fase 273 · Grupo 7 · Jornada 1",
+   "phase": 273,
+   "group": "Grupo 7",
+   "jornada": 1
+  },
+  {
+   "rankingId": "ccvm",
+   "opponent": "Claudio Andrade Lucena",
+   "deadline": "2027-01-07",
+   "label": "Fase 273 · Grupo 7 · Jornada 2",
+   "phase": 273,
+   "group": "Grupo 7",
+   "jornada": 2
+  },
+  {
+   "rankingId": "ccvm",
+   "opponent": "Ignacio Moreno Zapatero",
+   "deadline": "2027-01-07",
+   "label": "Fase 273 · Grupo 7 · Jornada 3",
+   "phase": 273,
+   "group": "Grupo 7",
+   "jornada": 3
+  },
+  {
+   "rankingId": "ccvm",
+   "opponent": "Diego de Riaño Carril",
+   "deadline": "2027-01-07",
+   "label": "Fase 273 · Grupo 7 · Jornada 4",
+   "phase": 273,
+   "group": "Grupo 7",
+   "jornada": 4
+  },
+  {
+   "rankingId": "ccvm",
+   "opponent": "Maxime Couvreur Couvreur",
+   "deadline": "2027-01-07",
+   "label": "Fase 273 · Grupo 7 · Jornada 5",
+   "phase": 273,
+   "group": "Grupo 7",
+   "jornada": 5
+  },
+  {
    "rankingId": "cdc",
    "opponent": "Iván López-Belmonte Encina",
    "deadline": "2026-11-10",
@@ -643,73 +688,129 @@
      "result": "L"
     }
    ]
+  },
+  "lucas ayuso cortina": {
+   "name": "Lucas Ayuso Cortina",
+   "source": "group",
+   "pos": 3,
+   "matches": []
+  },
+  "claudio andrade lucena": {
+   "name": "Claudio Andrade Lucena",
+   "source": "group",
+   "pos": 4,
+   "matches": []
+  },
+  "ignacio moreno zapatero": {
+   "name": "Ignacio Moreno Zapatero",
+   "source": "group",
+   "pos": 1,
+   "matches": []
+  },
+  "diego de riano carril": {
+   "name": "Diego de Riaño Carril",
+   "source": "group",
+   "pos": 2,
+   "matches": []
+  },
+  "maxime couvreur couvreur": {
+   "name": "Maxime Couvreur Couvreur",
+   "source": "group",
+   "pos": 5,
+   "matches": []
   }
  },
  "groups": [
   {
    "rankingId": "ccvm",
-   "phase": 266,
-   "name": "Grupo 4",
-   "start": "2026-05-07",
-   "end": "2026-06-14",
-   "current": false,
+   "phase": 273,
+   "name": "Grupo 7",
+   "start": "2026-11-02",
+   "end": "2027-01-07",
+   "current": true,
    "players": [
     {
-     "name": "Jesús Quesada Ruiz",
+     "name": "Ignacio Moreno Zapatero",
      "pos": 1,
-     "pts": 7,
-     "pj": 3,
-     "pg": 2,
-     "pp": 1,
-     "sg": 5,
-     "sp": 2,
-     "jg": 40,
-     "jp": 23,
+     "pts": 0,
+     "pj": 0,
+     "pg": 0,
+     "pp": 0,
+     "sg": 0,
+     "sp": 0,
+     "jg": 0,
+     "jp": 0,
      "me": false
     },
     {
-     "name": "Fco. Javier Trillo Osuna",
+     "name": "Diego de Riaño Carril",
      "pos": 2,
-     "pts": 6,
-     "pj": 2,
-     "pg": 2,
+     "pts": 0,
+     "pj": 0,
+     "pg": 0,
      "pp": 0,
-     "sg": 4,
-     "sp": 1,
-     "jg": 29,
-     "jp": 25,
+     "sg": 0,
+     "sp": 0,
+     "jg": 0,
+     "jp": 0,
      "me": false
     },
     {
      "name": "Matthias Homan",
-     "pos": 3,
-     "pts": 5,
-     "pj": 3,
-     "pg": 1,
-     "pp": 2,
-     "sg": 2,
-     "sp": 4,
-     "jg": 26,
-     "jp": 31,
+     "pos": 2,
+     "pts": 0,
+     "pj": 0,
+     "pg": 0,
+     "pp": 0,
+     "sg": 0,
+     "sp": 0,
+     "jg": 0,
+     "jp": 0,
      "me": true
     },
     {
-     "name": "Ignacio Reiris Rico",
-     "pos": 4,
-     "pts": 2,
-     "pj": 2,
+     "name": "Lucas Ayuso Cortina",
+     "pos": 3,
+     "pts": 0,
+     "pj": 0,
      "pg": 0,
-     "pp": 2,
+     "pp": 0,
      "sg": 0,
-     "sp": 4,
-     "jg": 8,
-     "jp": 24,
+     "sp": 0,
+     "jg": 0,
+     "jp": 0,
+     "me": false
+    },
+    {
+     "name": "Claudio Andrade Lucena",
+     "pos": 4,
+     "pts": 0,
+     "pj": 0,
+     "pg": 0,
+     "pp": 0,
+     "sg": 0,
+     "sp": 0,
+     "jg": 0,
+     "jp": 0,
+     "me": false
+    },
+    {
+     "name": "Maxime Couvreur Couvreur",
+     "pos": 5,
+     "pts": 0,
+     "pj": 0,
+     "pg": 0,
+     "pp": 0,
+     "sg": 0,
+     "sp": 0,
+     "jg": 0,
+     "jp": 0,
      "me": false
     }
    ],
    "overall": {
-    "pos": 18,
-    "of": 84
+    "pos": 36,
+    "of": 88
    }
   }
  ]

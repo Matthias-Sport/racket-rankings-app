@@ -3,7 +3,7 @@
 //   node scripts/scrape.mjs                       (uses the default name)
 //   node scripts/scrape.mjs --name "Jane Doe"
 // Only match data goes into data.json. Phone numbers and emails of other players are never stored there.
-//   --full       rescan every CCVM phase back to the start (the default only rescans the latest 8 and keeps older results
+//   --full       rescan every CCVM phase back to the start (the default only rescans the latest ~8 and keeps older results
 //                from data.json, which is much lighter on the club's server).
 //   --contacts   also writes ../Racket-Rankings-private/contacts-ccvm.local.csv with the phone/email of the players in YOUR current CCVM
 //                group(s) (the details the club shows to group members). That folder sits OUTSIDE the project so it can never be uploaded by accident; import it
@@ -19,14 +19,14 @@ const NAME = opt('name', 'Matthias Homan');
 const TODAY = new Date().toISOString().slice(0, 10);
 const WANT_CONTACTS = args.includes('--contacts');
 const FULL = args.includes('--full');
-const RECENT_PHASES = 8;
+const RECENT_RANGE = 40;                                                 // rescan the latest 40 phase numbers (about 8 phases of the adult ranking)
 const CONTACTS_SINCE = opt('contacts-since', TODAY);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
 const nameTokens = norm(NAME).split(' ');
 const isMe = s => { const n = norm(s); return nameTokens.every(t => n.includes(t)); };
-const tidy = s => { s = String(s || '').replace(/\s*-\s*$/, '').replace(/\s+/g, ' ').trim(); return s === s.toUpperCase() || s === s.toLowerCase() ? s.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Del|La|Las|Los|Y)\b/g, w => w.toLowerCase()) : s; };
+const tidy = s => { s = String(s || '').replace(/\s+null$/i, '').replace(/\s*-\s*$/, '').replace(/\s+/g, ' ').trim(); return s === s.toUpperCase() || s === s.toLowerCase() ? s.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Del|La|Las|Los|Y)\b/g, w => w.toLowerCase()) : s; };
 const iso = d => { const m = String(d || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : ''; };
 const flip = sc => sc.split(' ').map(t => { const m = t.match(/^(\(?)(\d+)[/-](\d+)(\)?)$/); return m ? `${m[1]}${m[3]}-${m[2]}${m[4]}` : t; }).join(' ');
 
@@ -69,9 +69,14 @@ async function scrapeCCVM(prevMatches = []) {
   const scout = new Map();                                               // group opponents -> their other results in the group
   let lastGroup = null;                                                  // standings of your most recent group (phases are scanned newest first)
   let phases = 0;
-  let top = 270;                                                         // then probe upwards for newer phases
-  while (((await ccvmApi({ codigo: top + 1, accion: 'recuperarGrupos' })).data || []).length) top++;
-  const floor = FULL || !prevMatches.length ? 1 : Math.max(1, top - RECENT_PHASES);
+  // Phase numbers are shared with the club's other rankings, so there are gaps (e.g. 270, then 273). Probe upwards until 15 numbers in a row are empty.
+  let top = Math.max(270, ...prevMatches.map(m => m.phase || 0));
+  for (let f = top + 1, misses = 0; misses < 15; f++) {
+    const found = ((await ccvmApi({ codigo: f, accion: 'recuperarGrupos' })).data || []).length;
+    if (found) { top = f; misses = 0; } else misses++;
+    await sleep(80);
+  }
+  const floor = FULL || !prevMatches.length ? 1 : Math.max(1, top - RECENT_RANGE);
   for (let fase = top; fase >= floor; fase--) {
     const groups = (await ccvmApi({ codigo: fase, accion: 'recuperarGrupos' })).data || [];
     await sleep(100);
