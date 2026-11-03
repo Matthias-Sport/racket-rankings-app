@@ -57,6 +57,19 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 [hidden]{display:none!important}
 .ninp{margin-top:6px}
 td.d{white-space:nowrap}
+.fresh{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--mute);margin:-6px 0 10px}.dot{width:8px;height:8px;border-radius:50%;background:var(--up);flex:none}
+:root{--up:#2e9a6b;--down:#e07b2c}
+.race{background:var(--soft);border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0 2px}
+.zonelbl{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin:10px 0 2px;display:flex;align-items:center;gap:6px}.zonelbl i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.lbrow{display:flex;align-items:center;gap:10px;padding:9px 0 9px 8px;border-top:1px solid var(--line);border-left:4px solid transparent;min-height:54px;cursor:pointer}
+.lbrow.up{border-left-color:var(--up)}.lbrow.down{border-left-color:var(--down)}.lbrow.me{background:var(--soft);cursor:default}
+.lbrow .pos{width:18px;text-align:center;font-weight:700;color:var(--mute)}.lbrow .who{flex:1;min-width:0}.lbrow .who b{display:block;font-size:15px}
+.lbrow .pts{text-align:right;font-variant-numeric:tabular-nums}.lbrow .pts b{font-size:19px;display:block;line-height:1}.lbrow .pts span{font-size:11px;color:var(--mute)}
+.lbrow .chev{color:var(--mute);font-size:13px;width:12px}
+.lbd>summary::before{content:none}.lbd[open]>summary .chev{transform:rotate(90deg)}
+.lbopen{background:var(--bg);border-top:1px solid var(--line);border-left:4px solid var(--accent);padding:10px 12px 12px;margin-bottom:4px}
+.lbopen .blk{margin-top:10px}.lbopen .lbl{font-size:11px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.mr{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-top:1px solid var(--line);font-size:13px}.lbopen .mr:first-of-type{border-top:0}.mr .t{flex:1}.mr .s{white-space:nowrap}
 .uphead{font-size:12px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 0}
 .uprow{border-top:1px solid var(--line)}.uphead+.uprow{border-top:0}
 .uprow>summary{display:flex;align-items:center;gap:8px;padding:10px 0;cursor:pointer;min-height:56px}
@@ -200,6 +213,7 @@ const RESULT_EMAILS={cdc:'resultados@rankingclubdecampo.es',ccvm:'info@escuelate
 const DEFAULT_RTPL='Hola, he ganado contra {opponent} y el resultado fue {score}. Gracias';
 let encBlob=null;
 let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL),msgTpl2=lsGet('.msgtpl2',DEFAULT_TPL2),rmail=lsGet('.rmail',{}),rtpl=lsGet('.rtpl',DEFAULT_RTPL);
+let check=null;                                                          // last GitHub update-run info (freshness)
 let sync={upcoming:[],standings:[],groups:[],scouting:{},generated:'',status:'not loaded'};
 let contacts=(()=>{try{return JSON.parse(localStorage.getItem(KEY+'.contacts'))||[]}catch(e){return[]}})();
 const saveContacts=()=>{try{localStorage.setItem(KEY+'.contacts',JSON.stringify(contacts))}catch(e){alert('Could not save contacts.')}};
@@ -556,6 +570,76 @@ function standingsCard(){
   if(!items.length)return '';
   return `<div class="card"><h2>Where you stand</h2>`+items.map(({r,b})=>`<div style="padding:6px 0"><div class="small" style="margin-bottom:2px"><a href="#/rankings/${r.id}"><b>${esc(r.name)}</b></a></div>${b}</div>`).join('')+'</div>';
 }
+/* ---------- group leaderboard ---------- */
+function playerCard(g,p){
+  const k=oppKey(p.name),ui_=sync.upcoming.findIndex(u=>u.rankingId===g.rankingId&&u.phase===g.phase&&oppKey(u.opponent)===k),u=ui_>=0?sync.upcoming[ui_]:null;
+  const past=db.matches.filter(m=>(m.opponents||[]).some(n=>oppKey(n)===k)),s=stats(past);
+  const played=past.filter(m=>m.rankingId===g.rankingId&&(m.notes||'').includes('Fase '+g.phase));
+  const sc=sync.scouting[k],n=g.players.length,left=Math.max(0,n-1-p.pj),note=notes[k];
+  let h='';
+  h+=`<div class="lbl">Your match</div>`;
+  if(played.length)h+=played.map(m=>`<div class="mr"><span class="chip ${m.result}">${m.result}</span><span class="t">Played · ${esc(m.date)} · ${esc(m.notes||'')}</span><span class="s">${esc(m.score||'')}</span></div>`).join('');
+  else if(u)h+=`<div class="small">Jornada ${u.jornada||'?'}${u.deadline?` · play by <b>${esc(fmtDate(u.deadline).slice(0,5))}</b>`:''}</div><div style="margin-top:6px">${statusChip(u)}</div>`;
+  else h+='<div class="small mute">Not played in this phase.</div>';
+  h+=`<div style="margin-top:8px">${contactBlock(p.name,u?ui_:undefined)}</div>`;
+  h+=`<div class="blk"><div class="lbl">Head-to-head with you</div>${s.p?`<div class="small"><b>${rec(s)}</b> · sets ${s.sw}–${s.sl} · games ${s.gw}–${s.gl}</div>${matchTable(desc(past).slice(0,3),{edit:false,showRank:true})}`:'<div class="small mute">First meeting</div>'}</div>`;
+  if(sc&&sc.source==='group'&&sc.matches.length)h+=`<div class="blk"><div class="lbl">Their results in this group</div>${sc.matches.map(m=>`<div class="mr"><span class="chip ${m.result}">${m.result}</span><span class="t">vs ${esc(m.vs)}</span><span class="s">${esc(m.score)}</span></div>`).join('')}</div>`;
+  if(g.current)h+=`<div class="blk"><div class="lbl">Left to play</div><div class="small">${left} match${left===1?'':'es'} · up to <b>${p.pts+3*left}</b> pts</div></div>`;
+  if(note)h+=`<div class="blk"><div class="lbl">Your note</div><div class="small">${esc(note)}</div></div>`;
+  h+=`<div class="small" style="margin-top:10px"><a href="#/opponents/${encodeURIComponent(p.name)}">Full history and scouting →</a>${u?` · <a href="#/dashboard" data-act="openrow" data-u="${ui_}">Match controls →</a>`:''}</div>`;
+  return h;
+}
+function groupBoard(g){
+  const n=g.players.length,zones=n>=5,mi=g.players.findIndex(p=>p.me),me=g.players[mi];
+  let race='';
+  if(g.current&&me){
+    const left=Math.max(0,n-1-me.pj);
+    let t=`<b>You are ${ord(mi+1)} · ${me.pts} pts.</b> `;
+    if(zones){
+      if(mi<2){const d=me.pts-g.players[2].pts;t+=d>0?`In a move-up place, ${d} pt${d===1?'':'s'} ahead of 3rd.`:'In a move-up place, level on points with 3rd.'}
+      else if(mi>=n-2){const d=g.players[n-3].pts-me.pts;t+=d>0?`In a move-down place, ${d} pt${d===1?'':'s'} behind safety.`:'In a move-down place, level on points with safety.'}
+      else{const d=g.players[1].pts-me.pts;t+=d>0?`${d} pt${d===1?'':'s'} behind promotion (2nd place).`:'Level on points with 2nd place.'}
+    }
+    if(left)t+=` Max possible: ${me.pts+3*left} pts (${left} match${left===1?'':'es'} left).`;
+    race=`<div class="race">${t}</div>`;
+  }
+  const zoneOf=i=>!zones?'mid':i<2?'up':i>=n-2?'down':'mid';
+  const label={up:['Moves up (top 2)','var(--up)'],mid:['Holds position','#9aa39f'],down:['Moves down (bottom 2)','var(--down)']};
+  let last='',rows='';
+  g.players.forEach((p,i)=>{
+    const z=zoneOf(i);
+    if(zones&&z!==last){rows+=`<div class="zonelbl"><i style="background:${label[z][1]}"></i><span style="color:${z==='mid'?'var(--mute)':label[z][1]}">${label[z][0]}</span></div>`;last=z}
+    const k=oppKey(p.name),past=db.matches.filter(m=>(m.opponents||[]).some(x=>oppKey(x)===k)),u=sync.upcoming.find(x=>x.rankingId===g.rankingId&&x.phase===g.phase&&oppKey(x.opponent)===k);
+    const sub=`${p.pj} played · ${p.pg}–${p.pp}${past.length&&!p.me?` · H2H ${rec(stats(past))}`:''}${u&&!(plans[planKey(u)]||{}).status?' · <span class="st none" style="padding:0 7px">Not contacted</span>':''}`;
+    const head=`<span class="pos">${i+1}</span><div class="who"><b>${esc(p.name)}${p.me?' <span class="st" style="background:var(--accent);color:var(--accent-ink)">you</span>':''}</b><span class="small mute">${sub}</span></div><div class="pts"><b>${p.pts}</b><span>pts</span></div>`;
+    if(p.me)rows+=`<div class="lbrow ${z} me">${head}<span class="chev"></span></div>`;
+    else{const key='p:'+k;rows+=`<details class="lbd" data-open="${esc(key)}" ${ui.open&&ui.open[key]?'open':''}><summary class="lbrow ${z}">${head}<span class="chev">▸</span></summary><div class="lbopen">${playerCard(g,p)}</div></details>`}
+  });
+  return race+rows;
+}
+/* ---------- how fresh is the data ---------- */
+const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<2?'just now':m<90?m+' minutes ago':m<48*60?Math.round(m/60)+' hours ago':Math.round(m/1440)+' days ago'};
+function repoInfo(){const h=location.hostname;if(!h.endsWith('.github.io'))return null;const repo=location.pathname.split('/')[1];return repo?{owner:h.split('.')[0],repo}:null}
+async function loadCheck(){
+  const r=repoInfo();if(!r)return;
+  try{
+    const res=await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}/actions/workflows/update.yml/runs?per_page=6`);
+    if(!res.ok)throw new Error(res.status);
+    const runs=((await res.json()).workflow_runs||[]).filter(x=>x.status==='completed'),okRun=runs.find(x=>x.conclusion==='success');
+    check={url:`https://github.com/${r.owner}/${r.repo}/actions/workflows/update.yml`,lastOk:okRun?Date.parse(okRun.updated_at):null,lastFailed:!!runs[0]&&runs[0].conclusion!=='success'};
+    render();
+  }catch(e){}
+}
+function freshness(){
+  if(check){
+    const old=!check.lastOk||Date.now()-check.lastOk>2*864e5;
+    if(old||check.lastFailed)return `<div class="card alert"><b>⚠ ${check.lastFailed?'The latest automatic update failed.':'Results haven’t updated for a while.'}</b>
+      <div class="small mute" style="margin-top:4px">${check.lastOk?`Last successful check ${ago(check.lastOk)}.`:'No successful check found.'} What you see may be out of date.</div>
+      <div class="cbtn" style="margin-top:8px"><button class="btn" data-act="resync">Reload now</button><a class="btn" href="${check.url}" target="_blank" rel="noopener">Open update log</a></div></div>`;
+    return `<div class="fresh"><span class="dot"></span>Results checked <b>${ago(check.lastOk)}</b> · updates 3× a day</div>`;
+  }
+  return sync.generated?`<div class="fresh">Data last changed ${esc(sync.generated.slice(0,10))}</div>`:'';
+}
 function posChart(ms){
   const a=asc(ms.filter(m=>m.pos));if(a.length<2)return '';
   const W=640,H=190,L=34,R=8,T=10,B=22,pw=W-L-R,ph=H-T-B;
@@ -588,7 +672,7 @@ function pageDashboard(){
   const nemesis=opps.filter(o=>o.st.l>o.st.w).sort((a,b)=>(b.st.l-b.st.w)-(a.st.l-a.st.w));
   const faves=opps.filter(o=>o.st.w>o.st.l).sort((a,b)=>(b.st.w-b.st.l)-(a.st.w-a.st.l));
   const rks=db.rankings.filter(r=>ui.sport==='all'||r.sport===ui.sport).map(r=>({r,ms:ms.filter(m=>m.rankingId===r.id)})).filter(x=>x.ms.length);
-  return `<h1>Overview</h1>${reminders()}${nextUp()}${standingsCard()}${tiles(s,ms)}
+  return `<h1>Overview</h1>${freshness()}${reminders()}${nextUp()}${standingsCard()}${tiles(s,ms)}
   <div class="card"><h2>Recent form</h2>${chips(ms,15)}</div>
   <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>
   <div class="card"><h2>By ranking</h2><div class="tw"><table><thead><tr><th>Ranking</th><th class="n">P</th><th class="n">W–L</th><th class="n">Win %</th><th>Form</th></tr></thead><tbody>
@@ -664,7 +748,7 @@ function pageRanking(id){
   const rivals=[...opps].sort((a,b)=>b.st.p-a.st.p);
   return `<p class="small"><a href="#/rankings">← Rankings</a></p>
   <h1>${esc(r.name)} <span class="tag">${r.sport}</span> ${r.synced?'':`<button class="sm" data-act="rename" data-id="${id}">Rename</button> <button class="sm danger" data-act="delrank" data-id="${id}">Delete</button>`}</h1>
-  ${standingBlock(id)?`<div class="card"><h2>Standing</h2>${standingBlock(id)}${(sync.groups.find(x=>x.rankingId===id)||{players:[]}).players.length?'<div style="margin-top:10px">'+groupTable(sync.groups.find(x=>x.rankingId===id))+'</div>':''}</div>`:''}
+  ${standingBlock(id)?`<div class="card"><h2>Standing</h2>${standingBlock(id)}${(sync.groups.find(x=>x.rankingId===id)||{players:[]}).players.length?'<div style="margin-top:10px">'+groupBoard(sync.groups.find(x=>x.rankingId===id))+'</div>':''}</div>`:''}
   ${r.note?`<p class="mute small">${esc(r.note)}</p>`:''}
   ${ms.length?tiles(s,ms)+`<div class="card"><h2>Recent form</h2>${chips(ms,15)}<p class="mute small" style="margin:8px 0 0">Singles ${rec(sing)} · Doubles ${rec(dbl)}</p></div>
   <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>
@@ -678,6 +762,7 @@ function pageData(){
   <div class="card"><h2>Synced results</h2>
   <p class="small" style="margin:0 0 6px">${sync.status==='ok'?`Loaded <b>${db.matches.filter(m=>m.ext).length}</b> matches for ${esc(sync.player||'you')} from <code>data.json</code>${sync.replaced?` (${sync.replaced} hand-entered ${sync.replaced===1?'match was':'matches were'} replaced by the official result)`:''}, generated ${esc(sync.generated.slice(0,16).replace('T',' '))} UTC.`:`<span class="mute">${esc(sync.status)}</span>`}</p>
   <p class="mute small" style="margin:0 0 10px">Refresh with <code>node scripts/scrape.mjs</code> (CCVM tennis and Club de Campo). On GitHub it can run daily by itself, see README.</p>
+  ${freshness()}
   <button data-act="resync">Reload data.json</button></div>
   <div class="card"><h2>Contacts</h2>
   ${encBlob?`<div style="margin-bottom:12px"><b class="small">Club contact list (encrypted)</b><div class="mute small">Enter the passphrase once on each device; the list is then stored on that device only.</div>${unlockForm(contacts.length?'Refresh from encrypted list':'Unlock contacts')}</div>`:''}
@@ -976,6 +1061,7 @@ document.addEventListener('click',e=>{
   else if(act==='resettpl'){msgTpl=DEFAULT_TPL;msgTpl2=DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);render();toast('Messages reset')}
   else if(act==='copybackup'){const c=backupCode();(navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('Backup code copied ✓'),()=>prompt('Copy this backup code:',c))}
   else if(act==='restorebackup'){if(restoreCode($('#restoreBox').value)){toast('Backup restored ✓')}}
+  else if(act==='openrow'){const u=sync.upcoming[+b.dataset.u];ui.open=ui.open||{};ui.open['row:'+planKey(u)]=true}
   else if(act==='savertpl'){rtpl=$('#rtplBox').value.trim()||DEFAULT_RTPL;lsSet('.rtpl',rtpl);toast('Email text saved ✓')}
   else if(act==='resetrtpl'){rtpl=DEFAULT_RTPL;lsSet('.rtpl',rtpl);render();toast('Email text reset')}
   else if(act==='markdone'||act==='emailresult'){const u=sync.upcoming[+b.dataset.u],k=planKey(u);plans[k]={...plans[k],done:true};lsSet('.plans',plans);syncPlanMatch(u);setTimeout(render,act==='emailresult'?500:0);if(act==='markdone')toast('Moved to Done ✓')}
@@ -1025,6 +1111,7 @@ document.addEventListener('submit',e=>{
 render();
 loadSync();
 loadEnc();
+loadCheck();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
