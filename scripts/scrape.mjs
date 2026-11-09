@@ -85,6 +85,92 @@ async function scrapeCCVM(prevMatches = []) {
       const me = (g.jugadores || []).find(j => isMe(j.nombreCuadro));
       if (!me) continue;
       phases++;
+// Pulls your results from the public ranking sites and writes data.json for Racket Rankings.
+//   node scripts/scrape.mjs                       (uses the default name)
+//   node scripts/scrape.mjs --name "Jane Doe"
+// Only match data goes into data.json. Phone numbers and emails of other players are never stored there.
+//   --full       rescan every CCVM phase back to the start (the default only rescans the latest ~8 and keeps older results
+//                from data.json, which is much lighter on the club's server).
+//   --contacts   also writes ../Racket-Rankings-private/contacts-ccvm.local.csv with the phone/email of the players in YOUR current CCVM
+//                group(s) (the details the club shows to group members). That folder sits OUTSIDE the project so it can never be uploaded by accident; import it
+//                on the Data page. Use --contacts-since YYYY-MM-DD to include groups that ended after that date.
+import { writeFile, readFile, mkdir } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const args = process.argv.slice(2);
+const opt = (k, d) => { const i = args.indexOf('--' + k); return i < 0 ? d : (args[i + 1]?.startsWith('--') || args[i + 1] === undefined ? true : args[i + 1]); };
+const NAME = opt('name', 'Matthias Homan');
+const TODAY = new Date().toISOString().slice(0, 10);
+const WANT_CONTACTS = args.includes('--contacts');
+const FULL = args.includes('--full');
+const RECENT_RANGE = 40;                                                 // rescan the latest 40 phase numbers (about 8 phases of the adult ranking)
+const CONTACTS_SINCE = opt('contacts-since', TODAY);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+const nameTokens = norm(NAME).split(' ');
+const isMe = s => { const n = norm(s); return nameTokens.every(t => n.includes(t)); };
+const tidy = s => { s = String(s || '').replace(/\s+null$/i, '').replace(/\s*-\s*$/, '').replace(/\s+/g, ' ').trim(); return s === s.toUpperCase() || s === s.toLowerCase() ? s.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Del|La|Las|Los|Y)\b/g, w => w.toLowerCase()) : s; };
+const iso = d => { const m = String(d || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : ''; };
+const flip = sc => sc.split(' ').map(t => { const m = t.match(/^(\(?)(\d+)[/-](\d+)(\)?)$/); return m ? `${m[1]}${m[3]}-${m[2]}${m[4]}` : t; }).join(' ');
+
+async function getText(url, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (racket-rankings personal results sync)' } });
+      if (r.status === 404) return null;
+      if (r.ok) return await r.text();
+    } catch (e) { /* retry */ }
+    await sleep(800 * (i + 1));
+  }
+  throw new Error('Failed to fetch ' + url);
+}
+
+/* ---------- CCVM (escuelatenisccvm.com) ---------- */
+const CCVM = { id: 'ccvm', name: 'Ranking CCVM Adultos', sport: 'tennis' };
+async function ccvmApi(body) {
+  for (let i = 0; i < 3; i++) {
+    try {
+      const r = await fetch('https://www.escuelatenisccvm.com/app/api/ranking.do', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (r.ok) return await r.json();
+    } catch (e) { /* retry */ }
+    await sleep(800 * (i + 1));
+  }
+  throw new Error('CCVM API failed');
+}
+function ccvmSets(p, mineIsFirst) {
+  const sets = [];
+  for (let i = 1; i <= 5; i++) {
+    const a = p['r' + i], b = p['c' + i];
+    if (!a && !b) continue;
+    const [m, t] = mineIsFirst ? [a, b] : [b, a];
+    sets.push(Math.max(a, b) <= 1 ? `[${m}-${t}]` : `${m}-${t}`);   // 1/0 = match tie-break, margin not recorded
+  }
+  return sets.join(' ');
+}
+async function scrapeCCVM(prevMatches = []) {
+  const matches = [], upcoming = [], contacts = new Map();
+  const scout = new Map();                                               // group opponents -> their other results in the group
+  let lastGroup = null;                                                  // standings of your most recent group (phases are scanned newest first)
+  let phases = 0;
+  // Phase numbers are shared with the club's other rankings, so there are gaps (e.g. 270, then 273). Probe upwards until 15 numbers in a row are empty.
+  let top = Math.max(270, ...prevMatches.map(m => m.phase || 0));
+  for (let f = top + 1, misses = 0; misses < 15; f++) {
+    const found = ((await ccvmApi({ codigo: f, accion: 'recuperarGrupos' })).data || []).length;
+    if (found) { top = f; misses = 0; } else misses++;
+    await sleep(80);
+  }
+  const floor = FULL || !prevMatches.length ? 1 : Math.max(1, top - RECENT_RANGE);
+  for (let fase = top; fase >= floor; fase--) {
+    const groups = (await ccvmApi({ codigo: fase, accion: 'recuperarGrupos' })).data || [];
+    await sleep(100);
+    if (!groups.length || groups[0].codigoRanking !== 49) continue;     // 49 = the adult ranking
+    for (const g of groups) {
+      const me = (g.jugadores || []).find(j => isMe(j.nombreCuadro));
+      if (!me) continue;
+      phases++;
       const d = await ccvmApi({ codigo: g.codigo, accion: 'recuperarGrupo' });
       await sleep(100);
       const label = `Fase ${fase} · ${g.nombreGrupo}`;
@@ -153,7 +239,7 @@ async function scrapeCCVM(prevMatches = []) {
 }
 
 /* ---------- Ranking Club de Campo (rankingclubdecampo.es) ---------- */
-const PTG = { id: 'ptg', name: 'PTG (Padel Team Gourmet)', sport: 'padel', note: 'Padel ranking at app.padelteamgourmet.com (member login). Matches are entered by hand with + Match; there is no automatic import.' };
+const PTG = { id: 'ptg', name: 'PTG (Padel Team Gourmet)', sport: 'padel', note: 'Padel ranking at app.padelteamgourmet.com (member login). Matches are imported with scripts/ptg-import.mjs from a payload exported from the PTG app; the scraper keeps the imported rows (see below).' };
 const CDC = { id: 'cdc', name: 'Ranking Club de Campo', sport: 'tennis', note: 'The site does not publish exact match dates, so each match is dated to the end of its cuadro\'s play window. Position is your ladder number in that cuadro (lower is better).' };
 const MONTHS = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
 const cellText = h => h.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -240,13 +326,20 @@ catch (e) {                                                              // site
            scouting: Object.fromEntries(Object.entries(prev?.scouting || {}).filter(([, v]) => v.source === 'group')) };
 }
 const cdc = await scrapeCDC();
-const matches = [...ccvm.matches, ...cdc.matches].sort((a, b) => (a.date + a.ext).localeCompare(b.date + b.ext));
+// PTG sits behind a member login, so it is never scraped here: rows are merged into data.json by
+// scripts/ptg-import.mjs and this run carries them forward untouched (same keep-previous pattern as CCVM outages).
+const ptgKeep = {
+  matches: (prev?.matches || []).filter(m => m.rankingId === 'ptg'),
+  upcoming: (prev?.upcoming || []).filter(u => u.rankingId === 'ptg'),
+  standings: (prev?.standings || []).filter(s => s.rankingId === 'ptg'),
+};
+const matches = [...ccvm.matches, ...cdc.matches, ...ptgKeep.matches].sort((a, b) => (a.date + a.ext).localeCompare(b.date + b.ext));
 const out = {
   generated: new Date().toISOString(), player: NAME,
   rankings: [CCVM, CDC, PTG],
   matches,
-  upcoming: [...ccvm.upcoming, ...cdc.upcoming],
-  standings: cdc.standings,                                              // ladder position per ranking
+  upcoming: [...ccvm.upcoming, ...cdc.upcoming, ...ptgKeep.upcoming],
+  standings: [...cdc.standings, ...ptgKeep.standings],                   // ladder/group position per ranking
   scouting: { ...cdc.scouting, ...(ccvm.scouting || {}) },                                                // recent results of your upcoming opponents (Club de Campo)
   groups: ccvm.groups,                                                   // your latest CCVM group, with the full table
 };
@@ -261,3 +354,4 @@ if (WANT_CONTACTS) {
 }
 console.log(`CCVM: ${ccvm.matches.length} matches in ${ccvm.phases} groups · Club de Campo: ${cdc.matches.length} matches across ${cdc.cuadros} cuadros`);
 console.log(`Upcoming: ${out.upcoming.map(u => u.opponent + ' (' + u.label + ')').join('; ') || 'none'}`);
+
