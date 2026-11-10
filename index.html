@@ -793,6 +793,7 @@ function pageData(){
   <textarea id="rtplBox" rows="3">${esc(rtpl)}</textarea>
   <div class="mute small" style="margin-top:4px">Placeholders: <code>{opponent}</code>, <code>{score}</code>, <code>{label}</code>, <code>{me}</code></div>
   <div class="row" style="margin-top:8px"><button class="pri" data-act="savertpl">Save text</button><button data-act="resetrtpl">Reset</button></div></div>
+  ${sbCard()}
   <div class="card"><h2>Move data to another device</h2>
   <p class="mute small">One code with your hand-entered matches, notes, match statuses, result-email settings and message wording. Send it to yourself (WhatsApp, email, Notes) and paste it on the other device. Contacts are not included: unlock them there with your passphrase.</p>
   <div class="row"><button class="pri" data-act="copybackup">Copy backup code</button></div>
@@ -813,6 +814,7 @@ function pageData(){
 function render(){
   const h=location.hash.replace(/^#\/?/,'')||'dashboard';
   const [sec,arg]=h.split('/');
+  if(sec==='data'){if(!sb.asked){sb.asked=true;if(SharedBackup.configured())sbRefresh(true)}}else sb.asked=false; // the backup list is read once each time the Data page is opened
   const ICON={dashboard:'<path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10"/>',matches:'<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
     opponents:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.6M18 14.4c2.1.7 3.5 2.7 3.5 5.6"/>',
     rankings:'<path d="M5 20V11M12 20V4M19 20v-6"/>',data:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'};
@@ -963,9 +965,17 @@ function importCSV(text){
 }
 
 /* ---------- move your data to another device (copy / paste code) ---------- */
-function backupCode(){
-  const payload={v:1,saved:new Date().toISOString(),manual:db.matches.filter(m=>!m.ext),rankings:db.rankings.filter(r=>!r.synced),plans,notes,rmail,rtpl,msgTpl,msgTpl2};
-  return 'RR1:'+btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+// What a backup holds: hand-entered matches and rankings, notes, match statuses, result-email settings and message wording. Never contacts.
+function backupPayload(){return{v:1,app:'rankings',saved:new Date().toISOString(),manual:db.matches.filter(m=>!m.ext),rankings:db.rankings.filter(r=>!r.synced),plans,notes,rmail,rtpl,msgTpl,msgTpl2}}
+function backupCode(){return 'RR1:'+btoa(unescape(encodeURIComponent(JSON.stringify(backupPayload()))))}
+/** Adds a backup to this device: nothing here is deleted, matches already here are kept. */
+function applyBackup(d){
+  (d.rankings||[]).forEach(r=>{if(!db.rankings.some(x=>x.id===r.id))db.rankings.push(r)});
+  const have=new Set(db.matches.map(m=>m.id));
+  d.manual.forEach(m=>{if(!have.has(m.id))db.matches.push(m)});
+  plans={...plans,...(d.plans||{})};notes={...notes,...(d.notes||{})};rmail={...rmail,...(d.rmail||{})};
+  rtpl=d.rtpl||rtpl;msgTpl=d.msgTpl||msgTpl;msgTpl2=d.msgTpl2||msgTpl2;
+  save();lsSet('.plans',plans);lsSet('.notes',notes);lsSet('.rmail',rmail);lsSet('.rtpl',rtpl);lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);
 }
 function restoreCode(text){
   const t=String(text||'').trim();
@@ -973,12 +983,7 @@ function restoreCode(text){
   let d;try{d=JSON.parse(decodeURIComponent(escape(atob(t.slice(4).replace(/\s+/g,'')))))}catch(e){alert('The code looks incomplete or damaged. Copy it again, making sure the whole text is included.');return false}
   if(!d||!Array.isArray(d.manual)){alert('The code does not contain backup data.');return false}
   if(!confirm(`Add ${d.manual.length} hand-entered matches, ${Object.keys(d.notes||{}).length} notes and ${Object.keys(d.plans||{}).length} match statuses from the backup? Your current data stays; the backup fills in the rest.`))return false;
-  (d.rankings||[]).forEach(r=>{if(!db.rankings.some(x=>x.id===r.id))db.rankings.push(r)});
-  const have=new Set(db.matches.map(m=>m.id));
-  d.manual.forEach(m=>{if(!have.has(m.id))db.matches.push(m)});
-  plans={...plans,...(d.plans||{})};notes={...notes,...(d.notes||{})};rmail={...rmail,...(d.rmail||{})};
-  rtpl=d.rtpl||rtpl;msgTpl=d.msgTpl||msgTpl;msgTpl2=d.msgTpl2||msgTpl2;
-  save();lsSet('.plans',plans);lsSet('.notes',notes);lsSet('.rmail',rmail);lsSet('.rtpl',rtpl);lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);
+  applyBackup(d);
   render();return true;
 }
 function importContacts(text){
@@ -1068,6 +1073,16 @@ document.addEventListener('click',e=>{
   else if(act==='savetpl'){msgTpl=$('#tplBox').value.trim()||DEFAULT_TPL;msgTpl2=$('#tplBox2').value.trim()||DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);toast('Messages saved ✓')}
   else if(act==='resettpl'){msgTpl=DEFAULT_TPL;msgTpl2=DEFAULT_TPL2;lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);render();toast('Messages reset')}
   else if(act==='copybackup'){const c=backupCode();(navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('Backup code copied ✓'),()=>prompt('Copy this backup code:',c))}
+  else if(act==='sbsave'||act==='sbcheck'||act==='sbrestore'){
+    SharedBackup.setup($('#sbUrl').value,$('#sbTok').value);
+    if(!SharedBackup.configured()){sb.msg={ok:false,text:'Enter the Pocket CRM access token first.'};return render()}
+    if(act==='sbcheck'){sb.msg={ok:true,text:'Checking…'};render();return sbRefresh()}
+    if(act==='sbsave'){sb.msg={ok:true,text:'Backing up…'};render();
+      SharedBackup.save('rankings',backupPayload()).then(r=>{sb.msg={ok:true,text:'Backed up ('+r.size_kb+' KB).'}},e=>{sb.msg={ok:false,text:e.message}}).then(()=>sbRefresh(true));return}
+    if(!confirm('Add the latest Racket Rankings backup from Notion to this device? What is here stays; the backup only fills in what is missing.'))return;
+    sb.msg={ok:true,text:'Restoring…'};render();
+    SharedBackup.load('rankings').then(r=>{const d=r.object;if(!d||!Array.isArray(d.manual))throw new Error('That backup does not contain Racket Rankings data.');applyBackup(d);sb.msg={ok:true,text:'Restored ('+d.manual.length+' hand-entered matches, '+Object.keys(d.notes||{}).length+' notes) from the backup of '+new Date(r.at).toLocaleString()+'.'};render()},e=>{sb.msg={ok:false,text:e.message};render()});
+  }
   else if(act==='restorebackup'){if(restoreCode($('#restoreBox').value)){toast('Backup restored ✓')}}
   else if(act==='openrow'){const u=sync.upcoming[+b.dataset.u];ui.open=ui.open||{};ui.open['row:'+planKey(u)]=true}
   else if(act==='savertpl'){rtpl=$('#rtplBox').value.trim()||DEFAULT_RTPL;lsSet('.rtpl',rtpl);toast('Email text saved ✓')}
@@ -1116,6 +1131,82 @@ document.addEventListener('submit',e=>{
   if(e.target.matches('form[data-unlock]')){e.preventDefault();const i=e.target.querySelector('input');unlockContacts(i.value);i.value='';return}
   if(e.target.id==='rkForm'){e.preventDefault();db.rankings.push({id:uid(),name:$('#rkn').value.trim(),sport:$('#rks').value});save();render()}
 });
+/* ---------- shared backup (Notion, through the Pocket CRM service) ---------- */
+/* Shared backup client. The same code runs in My Day, Racket Rankings and Pocket CRM. Each app compresses its own data and
+   sends it to the Pocket CRM service, which keeps it in the Notion database "App backups". */
+const SharedBackup = (() => {
+  const DEFAULT_URL = 'https://contact-capture.matthias-homan.workers.dev';
+  const K = { url: 'sb.url', tok: 'sb.token', auto: 'sb.autoAt', last: 'sb.lastOk' };
+  const get = (k, d = '') => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+  const set = (k, v) => { try { localStorage.setItem(k, v); } catch { /* storage off */ } };
+  const NAMES = { myday: 'My Day', rankings: 'Racket Rankings', crm: 'Pocket CRM' };
+  const b64 = (buf) => { let s = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+  const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const pipe = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
+  const api = {
+    NAMES,
+    url: () => (get(K.url) || DEFAULT_URL).replace(/\/+$/, ''),
+    token: () => get(K.tok),
+    configured: () => !!get(K.tok),
+    setup(url, token) { set(K.url, (url || '').trim()); set(K.tok, (token || '').trim()); },
+    lastOk: () => Number(get(K.last, '0')) || 0,
+    device() { const m = /Android[^;)]*;\s*([^;)]+?)(?:\sBuild|\))/.exec(navigator.userAgent); return m && m[1] && m[1] !== 'K' ? m[1] : /Android/.test(navigator.userAgent) ? 'Android phone' : 'Browser'; },
+    /** object -> "gz:<base64>" (or "raw:" when the browser cannot compress). */
+    async pack(obj) {
+      const bytes = new TextEncoder().encode(JSON.stringify(obj));
+      if (typeof CompressionStream === 'function') return 'gz:' + b64(await pipe(bytes, new CompressionStream('gzip')));
+      return 'raw:' + b64(bytes);
+    },
+    async unpack(str) {
+      const raw = unb64(str.slice(str.indexOf(':') + 1));
+      const bytes = str.startsWith('gz:') ? await pipe(raw, new DecompressionStream('gzip')) : raw;
+      return JSON.parse(new TextDecoder().decode(bytes));
+    },
+    async call(path, init = {}) {
+      let res;
+      try { res = await fetch(api.url() + path, { ...init, headers: { Authorization: 'Bearer ' + api.token(), ...(init.body ? { 'Content-Type': 'application/json' } : {}) }, signal: AbortSignal.timeout(45000) }); }
+      catch { throw new Error('Could not reach the Pocket CRM service. Check the signal and the address.'); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(res.status === 401 ? 'The access token is wrong. Use the same token as Pocket CRM.' : data.error || `The service said no (${res.status}).`);
+      return data;
+    },
+    async save(app, obj) {
+      const data = await api.pack(obj);
+      const res = await api.call('/backup/save', { method: 'POST', body: JSON.stringify({ app, data, device: api.device() }) });
+      set(K.last, String(Date.now()));
+      return res.backup;
+    },
+    async load(app) { const r = await api.call('/backup/load?app=' + app); return { ...r, object: await api.unpack(r.data) }; },
+    async list() { return (await api.call('/backup/list')).backups; },
+    /** Once a day when the app is opened (and it has something to save). Silent: never throws. */
+    async auto(app, makeObject) {
+      if (!api.configured() || !navigator.onLine) return false;
+      if (Date.now() - (Number(get(K.auto, '0')) || 0) < 20 * 3600 * 1000) return false;
+      try { const o = makeObject(); if (!o) return false; set(K.auto, String(Date.now())); await api.save(app, o); return true; } catch { set(K.auto, '0'); return false; }
+    },
+    /** "3 hours ago" style label. */
+    ago(iso) { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); if (!(m >= 0)) return ''; if (m < 2) return 'just now'; if (m < 90) return m + ' minutes ago'; if (m < 36 * 60) return Math.round(m / 60) + ' hours ago'; return Math.round(m / 1440) + ' days ago'; },
+  };
+  return api;
+})();
+
+let sb={list:null,msg:null};
+async function sbRefresh(quiet){
+  if(!SharedBackup.configured()){sb.list=null;return}
+  try{sb.list=await SharedBackup.list();if(!quiet)sb.msg={ok:true,text:'Connected.'}}catch(e){sb.list=null;sb.msg={ok:false,text:e.message}}
+  render();
+}
+function sbCard(){
+  const rows=SharedBackup.configured()?'<div class="mute small" style="margin-top:10px">'+Object.entries(SharedBackup.NAMES).map(([k,n])=>{const b=(sb.list||[]).find(x=>x.app===k);const old=!b||Date.now()-new Date(b.at).getTime()>7*864e5;return `<div style="margin:2px 0;${old&&sb.list?'color:var(--warn,#b45309)':''}"><b>${n}</b>: ${sb.list?(b?esc(SharedBackup.ago(b.at))+' · '+b.size_kb+' KB'+(b.device?' · '+esc(b.device):''):'no backup yet'):'…'}</div>`}).join('')+'</div>':'';
+  return `<div class="card"><h2>Shared backup (Notion)</h2>
+  <p class="mute small">Saves your hand-entered matches, notes, match statuses and settings (not contacts) into the Notion database <b>App backups</b> through your Pocket CRM service, next to the backups of My Day and Pocket CRM. It backs up by itself once a day when you open the app.</p>
+  <label for="sbUrl">Pocket CRM address</label><input id="sbUrl" value="${esc(SharedBackup.url())}" autocomplete="off" autocapitalize="off">
+  <label for="sbTok">Pocket CRM access token</label><input id="sbTok" type="password" value="${esc(SharedBackup.token())}" placeholder="the same token as in Pocket CRM" autocomplete="off">
+  <div class="row" style="margin-top:8px"><button class="pri" data-act="sbsave">Back up now</button><button data-act="sbrestore">Restore</button><button data-act="sbcheck">Check</button></div>
+  ${sb.msg?`<div class="mute small" style="margin-top:8px;${sb.msg.ok?'':'color:var(--bad,#b91c1c)'}">${esc(sb.msg.text)}</div>`:''}${rows}</div>`;
+}
+SharedBackup.auto('rankings',()=>db.matches.some(m=>!m.ext)||Object.keys(notes).length||Object.keys(plans).length?backupPayload():null);
+
 render();
 loadSync();
 loadEnc();
