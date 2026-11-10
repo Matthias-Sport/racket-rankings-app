@@ -230,6 +230,7 @@ async function loadSync(){
       (m.planKey&&x.notes===m.notes)||(x.result===m.result&&Math.abs(day(x.date)-day(m.date))<=21)));
     const manual=db.matches.filter(m=>!m.ext),replaced=manual.filter(dup).length;
     db.matches=manual.filter(m=>!dup(m)).concat(syncedM);
+    (d.groups||[]).forEach(g=>g.players.forEach((q,i)=>{if(!q.rank)q.rank=i+1}));   // rank = place in the table order (the club's position field can tie)
     sync={upcoming:d.upcoming||[],standings:d.standings||[],groups:d.groups||[],scouting:d.scouting||{},generated:d.generated,status:'ok',player:d.player,replaced};
     save();
   }catch(e){sync.status='no data.json ('+e.message+')'}
@@ -415,7 +416,7 @@ function doneRow(u,i){
 function oppStanding(u){
   const g=sync.groups.find(x=>x.rankingId===u.rankingId&&x.current);if(!g)return '';
   const q=g.players.find(x=>plain(x.name)===plain(u.opponent));if(!q)return '';
-  return `${q.pos?ord(q.pos)+' · ':''}${q.pts} pts · ${q.pj} played`;
+  const r=q.rank||q.pos;return `${r?ord(r)+' · ':''}${q.pts} pts · ${q.pj} played`;
 }
 function statusChip(u){
   const p=plans[planKey(u)]||{},st=p.status||'';
@@ -561,7 +562,7 @@ function standingBlock(rankingId){
   if(st)h+=`<div style="font-size:22px;font-weight:700">#${st.pos}<span class="mute small" style="font-weight:400"> of ${st.of}${st.kind==='group'?'':' on the ladder'} · ${esc(st.label)}</span></div>`;
   if(g){
     const me=g.players.find(p=>p.me);
-    h+=`<div style="font-size:18px;font-weight:700">${esc(g.name)}${me&&me.pos?` · ${ord(me.pos)} of ${g.players.length}`:''}<span class="mute small" style="font-weight:400"> · Fase ${g.phase}, ${g.current?'in progress':'finished'} (${fmtD(g.start)}–${fmtD(g.end)})</span></div>`;
+    h+=`<div style="font-size:18px;font-weight:700">${esc(g.name)}${me&&(me.rank||me.pos)?` · ${ord(me.rank||me.pos)} of ${g.players.length}`:''}<span class="mute small" style="font-weight:400"> · Fase ${g.phase}, ${g.current?'in progress':'finished'} (${fmtD(g.start)}–${fmtD(g.end)})</span></div>`;
     if(g.overall)h+=`<div class="small mute">Overall across all groups: #${g.overall.pos} of ${g.overall.of}</div>`;
     if(!g.current)h+=`<div class="small mute" style="margin-top:4px">You are not in the current phase. Your new group appears here after the next sync once you are signed up.</div>`;
   }
@@ -853,9 +854,9 @@ function nameLists(){
 function fillNameSelect(sel,value){
   const {recent,all}=nameLists(),input=$('#'+sel.dataset.for),v=String(value||'').trim();
   const opt=n=>`<option value="${esc(n)}">${esc(n)}</option>`;
-  sel.innerHTML=`<option value="">${sel.dataset.for==='f_partner'?'No partner / choose…':'Choose opponent…'}</option>`
+  sel.innerHTML=`<option value="">${sel.dataset.for==='f_partner'?'No partner / choose…':'Choose opponent…'}</option><option value="__new">＋ New person…</option>`
     +(recent.length&&sel.dataset.for!=='f_partner'?`<optgroup label="Recent">${recent.map(opt).join('')}</optgroup>`:'')
-    +(all.length?`<optgroup label="All (A–Z)">${all.map(opt).join('')}</optgroup>`:'')+'<option value="__new">＋ New person…</option>';
+    +(all.length?`<optgroup label="All (A–Z)">${all.map(opt).join('')}</optgroup>`:'');
   const known=v&&all.find(n=>oppKey(n)===oppKey(v));
   if(!v){sel.value='';input.value='';input.hidden=true}
   else if(known){sel.value=known;input.value=known;input.hidden=true}

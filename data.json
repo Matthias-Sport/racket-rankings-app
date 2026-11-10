@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-10T01:14:47.771Z",
+ "generated": "2026-11-10T14:35:31.715Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -768,7 +768,8 @@
      "sp": 0,
      "jg": 0,
      "jp": 0,
-     "me": false
+     "me": false,
+     "rank": 1
     },
     {
      "name": "Diego de Riaño Carril",
@@ -781,7 +782,8 @@
      "sp": 0,
      "jg": 0,
      "jp": 0,
-     "me": false
+     "me": false,
+     "rank": 2
     },
     {
      "name": "Matthias Homan",
@@ -794,7 +796,8 @@
      "sp": 0,
      "jg": 0,
      "jp": 0,
-     "me": true
+     "me": true,
+     "rank": 3
     },
     {
      "name": "Lucas Ayuso Cortina",
@@ -807,7 +810,8 @@
      "sp": 0,
      "jg": 0,
      "jp": 0,
-     "me": false
+     "me": false,
+     "rank": 4
     },
     {
      "name": "Claudio Andrade Lucena",
@@ -820,7 +824,8 @@
      "sp": 0,
      "jg": 0,
      "jp": 0,
-     "me": false
+     "me": false,
+     "rank": 5
     },
     {
      "name": "Maxime Couvreur Couvreur",
@@ -833,11 +838,12 @@
      "sp": 0,
      "jg": 0,
      "jp": 0,
-     "me": false
+     "me": false,
+     "rank": 6
     }
    ],
    "overall": {
-    "pos": 36,
+    "pos": 37,
     "of": 88
    }
   }

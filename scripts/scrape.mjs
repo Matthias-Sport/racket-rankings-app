@@ -94,9 +94,10 @@ async function scrapeCCVM(prevMatches = []) {
           name: tidy(j.nombreCuadro), pos: j.posicion || 0, pts: j.puntos || 0, pj: j.PJ || 0, pg: j.PG || 0, pp: j.PP || 0,
           sg: j.SG || 0, sp: j.SP || 0, jg: j.JG || 0, jp: j.JP || 0, me: j.codigo === me.codigo,
         })).sort((a, b) => (a.pos || 99) - (b.pos || 99));
+        players.forEach((q, i) => { q.rank = i + 1; });                           // the club's own position field can tie (e.g. two players on 2); the table order is what players see
         const numbered = /^grupo \d+$/i.test(g.nombreGrupo || '');
         const above = groups.filter(x => x.orden < g.orden).reduce((n, x) => n + (x.jugadores || []).length, 0);
-        const myPos = players.find(x => x.me)?.pos || 0;
+        const myPos = players.find(x => x.me)?.rank || 0;
         lastGroup = {
           rankingId: 'ccvm', phase: fase, name: g.nombreGrupo, start: iso(g.fechaInicio), end: iso(g.fechaFin),
           current: iso(g.fechaFin) >= TODAY, players,
