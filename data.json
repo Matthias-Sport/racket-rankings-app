@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-09T19:01:42.274Z",
+ "generated": "2026-11-10T01:14:47.771Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -17,7 +17,7 @@
    "id": "ptg",
    "name": "PTG (Padel Team Gourmet)",
    "sport": "padel",
-   "note": "Padel ranking at app.padelteamgourmet.com (member login). Matches are entered by hand with + Match; there is no automatic import."
+   "note": "Padel ranking at app.padelteamgourmet.com (member login). Matches are imported with scripts/ptg-import.mjs from a payload exported from the PTG app; the scraper keeps the imported rows (see below)."
   }
  ],
  "matches": [
