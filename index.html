@@ -137,6 +137,7 @@ label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
   dialog{max-height:92dvh;overflow:auto;padding:16px}
   h1{font-size:21px}
 }
+.focuscarry{border-top:1px solid var(--line);padding:12px 0}.focuswords{font-size:16px;font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere}#focusForm textarea{resize:vertical}#focusForm button{min-height:44px}
 </style>
 </head>
 <body>
@@ -213,6 +214,9 @@ const RESULT_EMAILS={cdc:'resultados@rankingclubdecampo.es',ccvm:'info@escuelate
 const DEFAULT_RTPL='Hola, he ganado contra {opponent} y el resultado fue {score}. Gracias';
 let encBlob=null;
 let plans=lsGet('.plans',{}),notes=lsGet('.notes',{}),msgTpl=lsGet('.msgtpl',DEFAULT_TPL),msgTpl2=lsGet('.msgtpl2',DEFAULT_TPL2),rmail=lsGet('.rmail',{}),rtpl=lsGet('.rtpl',DEFAULT_RTPL);
+let matchFocus=lsGet('.focus',{});
+let focusDirty=false;
+const focusDrafts={};
 let check=null;                                                          // last GitHub update-run info (freshness)
 let sync={upcoming:[],standings:[],groups:[],scouting:{},generated:'',status:'not loaded'};
 let contacts=(()=>{try{return JSON.parse(localStorage.getItem(KEY+'.contacts'))||[]}catch(e){return[]}})();
@@ -229,6 +233,16 @@ async function loadSync(){
     const dup=m=>m.type==='singles'&&syncedM.some(x=>x.rankingId===m.rankingId&&plain((x.opponents||[])[0])===plain((m.opponents||[])[0])&&(
       (m.planKey&&x.notes===m.notes)||(x.result===m.result&&Math.abs(day(x.date)-day(m.date))<=21)));
     const manual=db.matches.filter(m=>!m.ext),replaced=manual.filter(dup).length;
+    // Preserve private reflections when the existing result reconciliation replaces a manual singles match.
+    let focusMoved=false;
+    manual.filter(dup).forEach(m=>{
+      const old=matchFocus[focusKey(m)];if(!old)return;
+      const x=syncedM.find(x=>x.rankingId===m.rankingId&&plain((x.opponents||[])[0])===plain((m.opponents||[])[0])&&((m.planKey&&x.notes===m.notes)||(x.result===m.result&&Math.abs(day(x.date)-day(m.date))<=21)));
+      if(!x)return;const k=focusKey(x);
+      if(!matchFocus[k]||old.updated>matchFocus[k].updated)matchFocus[k]=old;
+      delete matchFocus[focusKey(m)];focusMoved=true;
+    });
+    if(focusMoved)lsSet('.focus',matchFocus);
     db.matches=manual.filter(m=>!dup(m)).concat(syncedM);
     (d.groups||[]).forEach(g=>g.players.forEach((q,i)=>{if(!q.rank)q.rank=i+1}));   // rank = place in the table order (the club's position field can tie)
     sync={upcoming:d.upcoming||[],standings:d.standings||[],groups:d.groups||[],scouting:d.scouting||{},generated:d.generated,status:'ok',player:d.player,replaced};
@@ -332,7 +346,7 @@ function matchTable(ms,{edit=true,showRank=true}={}){
     const sub=[esc(m.date),showRank?`<a href="#/rankings/${m.rankingId}">${esc(rankOf(m).name)}</a>`:'',m.notes?esc(m.notes):''].filter(Boolean).join(' · ');
     return `<div class="mrow"><span class="chip ${m.result}">${m.result}</span>
       <div class="mmain"><div class="mopp">${matchLabel(m)}</div><div class="mute small">${sub}</div></div>
-      <div class="mscore">${esc(m.score||'')}</div>
+      <div class="mscore">${esc(m.score||'')}<br><a class="small" href="#/focus/${encodeURIComponent(focusKey(m))}">Focus</a></div>
       ${edit&&!m.ext?`<div class="macts"><button class="sm" data-act="edit" data-id="${m.id}" aria-label="Edit match">Edit</button><button class="sm danger" data-act="del" data-id="${m.id}" aria-label="Delete match">✕</button></div>`:''}</div>`}).join('')+'</div>';
 }
 
@@ -671,6 +685,64 @@ function oppTable(list,{limit}={}){
 const noData=`<div class="card empty"><p><b>No matches yet.</b></p><p>Add your first match, import a CSV, or load sample data to explore.</p>
 <button class="pri" data-act="add">+ Add match</button> <button data-act="sample">Load sample data</button></div>`;
 
+/* ---------- private match focus, never in public data.json ---------- */
+const focusKey=m=>String(m.ext||m.id);
+const focusEntries=()=>Object.entries(matchFocus).filter(([k,v])=>v&&!v.deleted&&v.match).sort((a,b)=>(b[1].updated||0)-(a[1].updated||0));
+function mergeFocus(incoming){
+ if(!incoming||typeof incoming!=='object'||Array.isArray(incoming))return;
+ for(const [k,v] of Object.entries(incoming))if(v&&typeof v==='object'&&Number.isFinite(v.updated)&&(!matchFocus[k]||v.updated>matchFocus[k].updated))matchFocus[k]=v;
+ lsSet('.focus',matchFocus);
+}
+function storeFocus(k,v){
+ const next={...matchFocus,[k]:v};
+ try{localStorage.setItem(KEY+'.focus',JSON.stringify(next));matchFocus=next;delete focusDrafts[k];focusDirty=Object.keys(focusDrafts).length>0;return true}
+ catch(e){alert('Could not save match focus. Copy your words before leaving this page.');return false}
+}
+function focusSummary(){
+ const sports=ui.sport==='all'?['tennis','padel']:[ui.sport];
+ return `<div class="card"><h2>Match focus <span class="tag">private notes</span></h2>${sports.map(sport=>{
+ const active=focusEntries().filter(([k,v])=>v.sport===sport&&v.focus).sort((a,b)=>(b[1].chosenAt||0)-(a[1].chosenAt||0))[0];
+ const show=active&&!active[1].workedOn;
+ return `<div class="focuscarry"><b>${esc(sport==='padel'?'Padel':'Tennis')}</b>${show?`<p class="focuswords">${esc(active[1].focus)}</p><div class="mute small">From ${esc(active[1].match.date)} · ${esc(active[1].match.label)}</div><div class="row" style="margin-top:8px"><button data-act="focus-worked" data-id="${esc(active[0])}">Worked on it</button><button data-act="focus-keep" data-id="${esc(active[0])}">Keep for next time</button></div>`:'<p class="mute small">No current focus. Add one after a match if useful.</p>'}</div>`
+ }).join('')}<a class="btn" href="#/focus">After a match / focus history</a></div>`;
+}
+function pageFocus(arg){
+ const matches=desc(visible()),k=arg||(matches[0]?focusKey(matches[0]):'');
+ const m=db.matches.find(x=>focusKey(x)===k),entry=matchFocus[k]&&!matchFocus[k].deleted?matchFocus[k]:null;
+ const draft=focusDrafts[k];
+ const ref=m?{date:m.date,label:(m.opponents||[]).join(' & '),ranking:rankOf(m).name}:entry?.match,sport=m?rankOf(m).sport:entry?.sport;
+ const opts=matches.map(x=>`<option value="${esc(focusKey(x))}" ${focusKey(x)===k?'selected':''}>${esc(x.date+' · '+rankOf(x).sport+' · '+(x.opponents||[]).join(' & '))}</option>`).join('');
+ return `<h1>Match focus</h1><p class="mute small">Optional. Your own lesson, carried into your next match in the same sport. These notes are not published with results.</p>${focusSummary()}
+ <div class="card"><h2>After a match</h2>${matches.length?`<label for="focusMatch">Completed match</label><select id="focusMatch">${!m&&ref?`<option selected value="${esc(k)}">${esc(ref.date+' · '+ref.label+' (saved reference)')}</option>`:''}${opts}</select>`:''}
+ ${ref?`<form id="focusForm" data-key="${esc(k)}" data-sport="${esc(sport)}"><p class="mute small">${esc(ref.date)} · ${esc(ref.ranking||sport)} · ${esc(ref.label)}${entry?.workedOn?' · worked on':''}</p>
+ <label for="focusWorked">What worked?</label><textarea id="focusWorked" rows="2" maxlength="2000" placeholder="Optional">${esc(draft?.worked??entry?.worked??'')}</textarea>
+ <label for="focusCost">What cost points?</label><textarea id="focusCost" rows="2" maxlength="2000" placeholder="Optional">${esc(draft?.cost??entry?.cost??'')}</textarea>
+ <label for="focusNext">One focus for next time</label><textarea id="focusNext" rows="2" maxlength="500" placeholder="One thing to work on, if useful">${esc(draft?.focus??entry?.focus??'')}</textarea>
+ <div class="row" style="margin-top:14px"><button class="pri" type="submit">Save match focus</button>${entry?`<button type="button" class="danger" data-act="focus-delete" data-id="${esc(k)}">Delete reflection</button>`:''}</div><div id="focusSaveStatus" class="mute small" aria-live="polite">${draft?'Unsaved changes':entry?'Saved on this device.':''}</div></form>`:'<p class="mute">Log a completed match first. You can reflect as soon as you log it, without waiting for a league update.</p>'}</div>
+ <div class="card"><h2>Focus history</h2>${focusEntries().filter(([id,v])=>ui.sport==='all'||v.sport===ui.sport).map(([id,v])=>`<div class="focuscarry"><b>${esc(v.sport)} · ${esc(v.match.date)}</b><div class="mute small">${esc(v.match.label)}</div>${v.focus?`<p class="focuswords">${esc(v.focus)}</p>`:'<p class="mute small">Reflection saved without a next focus.</p>'}<div class="mute small">${v.workedOn?'✓ Worked on':v.focus?'Carried forward until worked on or a newer focus is chosen':'Reflection only'}</div><a class="btn" href="#/focus/${encodeURIComponent(id)}">View / edit</a>${v.focus?` <button data-act="focus-keep" data-id="${esc(id)}">Use next time</button>`:''}</div>`).join('')||'<p class="mute small">No reflections yet.</p>'}</div>
+ <p class="mute small">Saved in this browser, included in JSON export and backup code. If shared backup is configured, included in its existing private Notion backup. This is not live cross-device sync. Use Data → Back up now after notes you want to protect.</p><a href="#/matches">Back to matches</a>`;
+}
+document.addEventListener('submit',e=>{
+ if(e.target.id!=='focusForm')return;e.preventDefault();
+ const form=e.target,k=form.dataset.key,old=matchFocus[k],m=db.matches.find(x=>focusKey(x)===k);
+ const worked=$('#focusWorked').value.trim(),cost=$('#focusCost').value.trim(),focus=$('#focusNext').value.trim();
+ if(!worked&&!cost&&!focus){toast('Add a reflection or use Delete to remove an old one.');return}
+ const changed=focus!==(old?.focus||''),now=Date.now();
+ const match=m?{date:m.date,label:(m.opponents||[]).join(' & '),ranking:rankOf(m).name}:old?.match;
+ if(!match)return;
+ if(storeFocus(k,{worked,cost,focus,sport:form.dataset.sport,match,updated:now,chosenAt:changed?now:(old?.chosenAt||now),workedOn:changed?null:(old?.workedOn||null)})){render();toast('Match focus saved ✓')}
+});
+document.addEventListener('input',e=>{if(e.target.closest('#focusForm')){focusDirty=true;const k=$('#focusForm').dataset.key;focusDrafts[k]={worked:$('#focusWorked').value,cost:$('#focusCost').value,focus:$('#focusNext').value};$('#focusSaveStatus').textContent='Unsaved changes'}});
+document.addEventListener('change',e=>{if(e.target.id==='focusMatch'){location.hash='#/focus/'+encodeURIComponent(e.target.value)}});
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');if(!b||!b.dataset.act.startsWith('focus-'))return;
+ const k=b.dataset.id,v=matchFocus[k];if(!v)return;
+ if(b.dataset.act==='focus-delete'){if(!confirm('Delete this private reflection?'))return;if(storeFocus(k,{deleted:true,updated:Date.now()})){render();toast('Reflection deleted')}return}
+ if(b.dataset.act==='focus-worked'&&storeFocus(k,{...v,workedOn:Date.now(),updated:Date.now()})){render();toast('Marked worked on')}
+ if(b.dataset.act==='focus-keep'&&storeFocus(k,{...v,workedOn:null,chosenAt:Date.now(),updated:Date.now()})){render();toast('Kept for next time')}
+});
+window.addEventListener('beforeunload',e=>{if(focusDirty){e.preventDefault();e.returnValue=''}});
+
 /* ---------- pages ---------- */
 function pageDashboard(){
   const ms=visible();if(!ms.length)return '<h1>Overview</h1>'+noData;
@@ -680,7 +752,7 @@ function pageDashboard(){
   const nemesis=opps.filter(o=>o.st.l>o.st.w).sort((a,b)=>(b.st.l-b.st.w)-(a.st.l-a.st.w));
   const faves=opps.filter(o=>o.st.w>o.st.l).sort((a,b)=>(b.st.w-b.st.l)-(a.st.w-a.st.l));
   const rks=db.rankings.filter(r=>ui.sport==='all'||r.sport===ui.sport).map(r=>({r,ms:ms.filter(m=>m.rankingId===r.id)})).filter(x=>x.ms.length);
-  return `<h1>Overview</h1>${freshness()}${reminders()}${nextUp()}${standingsCard()}${tiles(s,ms)}
+  return `<h1>Overview</h1>${freshness()}${focusSummary()}${reminders()}${nextUp()}${standingsCard()}${tiles(s,ms)}
   <div class="card"><h2>Recent form</h2>${chips(ms,15)}</div>
   <div class="grid g2"><div class="card"><h2>Win rate trend</h2>${rollingChart(ms)}</div><div class="card"><h2>Matches per month</h2>${monthlyChart(ms)}</div></div>
   <div class="card"><h2>By ranking</h2><div class="tw"><table><thead><tr><th>Ranking</th><th class="n">P</th><th class="n">W–L</th><th class="n">Win %</th><th>Form</th></tr></thead><tbody>
@@ -694,7 +766,7 @@ function pageMatches(){
   return `<h1>Matches</h1><div class="row"><input id="mq" placeholder="Search…" value="${esc(ui.mSearch)}">
   <select id="mr"><option value="">All rankings</option>${opts}</select>
   <select id="mres"><option value="">W + L</option><option value="W" ${ui.mRes==='W'?'selected':''}>Wins</option><option value="L" ${ui.mRes==='L'?'selected':''}>Losses</option></select></div>
-  <div class="card" id="mlist"></div>`;
+  <a class="btn" href="#/focus">Match focus / history</a><div class="card" id="mlist"></div>`;
 }
 function fillMatches(){
   const q=ui.mSearch.toLowerCase();
@@ -795,7 +867,7 @@ function pageData(){
   <div class="row" style="margin-top:8px"><button class="pri" data-act="savertpl">Save text</button><button data-act="resetrtpl">Reset</button></div></div>
   ${sbCard()}
   <div class="card"><h2>Move data to another device</h2>
-  <p class="mute small">One code with your hand-entered matches, notes, match statuses, result-email settings and message wording. Send it to yourself (WhatsApp, email, Notes) and paste it on the other device. Contacts are not included: unlock them there with your passphrase.</p>
+  <p class="mute small">One code with your hand-entered matches, notes, match focus, match statuses, result-email settings and message wording. Send it to yourself (WhatsApp, email, Notes) and paste it on the other device. Contacts are not included: unlock them there with your passphrase.</p>
   <div class="row"><button class="pri" data-act="copybackup">Copy backup code</button></div>
   <label for="restoreBox">On the other device, paste the code here</label>
   <textarea id="restoreBox" rows="3" placeholder="RR1:…" autocomplete="off"></textarea>
@@ -814,6 +886,7 @@ function pageData(){
 function render(){
   const h=location.hash.replace(/^#\/?/,'')||'dashboard';
   const [sec,arg]=h.split('/');
+  focusDirty=Object.keys(focusDrafts).length>0;
   if(sec==='data'){if(!sb.asked){sb.asked=true;if(SharedBackup.configured())sbRefresh(true)}}else sb.asked=false; // the backup list is read once each time the Data page is opened
   const ICON={dashboard:'<path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10"/>',matches:'<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
     opponents:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.6M18 14.4c2.1.7 3.5 2.7 3.5 5.6"/>',
@@ -822,7 +895,7 @@ function render(){
     .map(([k,t])=>`<a href="#/${k}" class="${sec===k?'on':''}" ${sec===k?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg><span>${t}</span></a>`).join('');
   $('#sportPills').innerHTML=[['all','All'],['tennis','Tennis'],['padel','Padel']].map(([k,t])=>`<button data-sport="${k}" class="${ui.sport===k?'on':''}">${t}</button>`).join('');
   const a=arg?decodeURIComponent(arg):'';
-  const page={dashboard:pageDashboard,matches:pageMatches,opponents:()=>a?pageOpponent(a):pageOpponents(),rankings:()=>a?pageRanking(a):pageRankings(),data:pageData}[sec]||pageDashboard;
+  const page={dashboard:pageDashboard,matches:pageMatches,opponents:()=>a?pageOpponent(a):pageOpponents(),rankings:()=>a?pageRanking(a):pageRankings(),data:pageData,focus:()=>pageFocus(a)}[sec]||pageDashboard;
   $('#app').innerHTML=page();
   if(sec==='matches'&&$('#mlist'))fillMatches();
   if(sec==='opponents'&&!a&&$('#olist'))fillOpponents();
@@ -966,10 +1039,11 @@ function importCSV(text){
 
 /* ---------- move your data to another device (copy / paste code) ---------- */
 // What a backup holds: hand-entered matches and rankings, notes, match statuses, result-email settings and message wording. Never contacts.
-function backupPayload(){return{v:1,app:'rankings',saved:new Date().toISOString(),manual:db.matches.filter(m=>!m.ext),rankings:db.rankings.filter(r=>!r.synced),plans,notes,rmail,rtpl,msgTpl,msgTpl2}}
+function backupPayload(){return{v:1,app:'rankings',saved:new Date().toISOString(),manual:db.matches.filter(m=>!m.ext),rankings:db.rankings.filter(r=>!r.synced),plans,notes,matchFocus,rmail,rtpl,msgTpl,msgTpl2}}
 function backupCode(){return 'RR1:'+btoa(unescape(encodeURIComponent(JSON.stringify(backupPayload()))))}
 /** Adds a backup to this device: nothing here is deleted, matches already here are kept. */
 function applyBackup(d){
+  mergeFocus(d.matchFocus);
   (d.rankings||[]).forEach(r=>{if(!db.rankings.some(x=>x.id===r.id))db.rankings.push(r)});
   const have=new Set(db.matches.map(m=>m.id));
   d.manual.forEach(m=>{if(!have.has(m.id))db.matches.push(m)});
@@ -1062,7 +1136,7 @@ document.addEventListener('click',e=>{
     if(confirm(`Delete this ranking and its ${n} matches?`)){db.rankings=db.rankings.filter(r=>r.id!==id);db.matches=db.matches.filter(m=>m.rankingId!==id);save();location.hash='#/rankings'}}
   else if(act==='sample')loadSample();
   else if(act==='clear'){if(confirm('Delete ALL rankings and matches from this browser?')){db={rankings:[],matches:[]};save();render()}}
-  else if(act==='exportjson')download('racket-rankings-backup-'+today()+'.json',JSON.stringify({...db,plans,notes,rmail,rtpl,msgTpl,msgTpl2},null,1),'application/json');
+  else if(act==='exportjson')download('racket-rankings-backup-'+today()+'.json',JSON.stringify({...db,plans,notes,matchFocus,rmail,rtpl,msgTpl,msgTpl2},null,1),'application/json');
   else if(act==='exportcsv'){
     const lines=desc(db.matches).map(m=>{const r=rankOf(m);return [m.date,r.name,r.sport,m.type,m.partner||'',m.opponents[0]||'',m.opponents[1]||'',m.score,m.result,m.notes||''].map(csvCell).join(',')});
     download('courtlog-matches-'+today()+'.csv',[CSV_HEAD,...lines].join('\n'),'text/csv');
@@ -1102,7 +1176,7 @@ document.addEventListener('click',e=>{
         if(act==='importcsv'){importCSV(String(rd.result));return}
         if(act==='importcontacts'){importContacts(String(rd.result));return}
         try{const d=JSON.parse(rd.result);if(!d.rankings||!d.matches)throw 0;
-          if(confirm(`Replace current data with backup (${d.matches.length} matches)?`)){plans=d.plans||plans;notes=d.notes||notes;rmail=d.rmail||rmail;rtpl=d.rtpl||rtpl;msgTpl=d.msgTpl||msgTpl;msgTpl2=d.msgTpl2||msgTpl2;lsSet('.plans',plans);lsSet('.notes',notes);lsSet('.rmail',rmail);lsSet('.rtpl',rtpl);lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);db={rankings:d.rankings,matches:d.matches};save();render()}}
+          if(confirm(`Replace current data with backup (${d.matches.length} matches)?`)){mergeFocus(d.matchFocus);plans=d.plans||plans;notes=d.notes||notes;rmail=d.rmail||rmail;rtpl=d.rtpl||rtpl;msgTpl=d.msgTpl||msgTpl;msgTpl2=d.msgTpl2||msgTpl2;lsSet('.plans',plans);lsSet('.notes',notes);lsSet('.rmail',rmail);lsSet('.rtpl',rtpl);lsSet('.msgtpl',msgTpl);lsSet('.msgtpl2',msgTpl2);db={rankings:d.rankings,matches:d.matches};save();render()}}
         catch(_){alert('That file is not a Racket Rankings backup.')}};
       rd.readAsText(file)};
     f.click();
@@ -1199,13 +1273,13 @@ async function sbRefresh(quiet){
 function sbCard(){
   const rows=SharedBackup.configured()?'<div class="mute small" style="margin-top:10px">'+Object.entries(SharedBackup.NAMES).map(([k,n])=>{const b=(sb.list||[]).find(x=>x.app===k);const old=!b||Date.now()-new Date(b.at).getTime()>7*864e5;return `<div style="margin:2px 0;${old&&sb.list?'color:var(--warn,#b45309)':''}"><b>${n}</b>: ${sb.list?(b?esc(SharedBackup.ago(b.at))+' · '+b.size_kb+' KB'+(b.device?' · '+esc(b.device):''):'no backup yet'):'…'}</div>`}).join('')+'</div>':'';
   return `<div class="card"><h2>Shared backup (Notion)</h2>
-  <p class="mute small">Saves your hand-entered matches, notes, match statuses and settings (not contacts) into the Notion database <b>App backups</b> through your Pocket CRM service, next to the backups of My Day and Pocket CRM. It backs up by itself once a day when you open the app.</p>
+  <p class="mute small">Saves your hand-entered matches, notes, match focus, match statuses and settings (not contacts) into the Notion database <b>App backups</b> through your Pocket CRM service, next to the backups of My Day and Pocket CRM. It backs up by itself once a day when you open the app.</p>
   <label for="sbUrl">Pocket CRM address</label><input id="sbUrl" value="${esc(SharedBackup.url())}" autocomplete="off" autocapitalize="off">
   <label for="sbTok">Pocket CRM access token</label><input id="sbTok" type="password" value="${esc(SharedBackup.token())}" placeholder="the same token as in Pocket CRM" autocomplete="off">
   <div class="row" style="margin-top:8px"><button class="pri" data-act="sbsave">Back up now</button><button data-act="sbrestore">Restore</button><button data-act="sbcheck">Check</button></div>
   ${sb.msg?`<div class="mute small" style="margin-top:8px;${sb.msg.ok?'':'color:var(--bad,#b91c1c)'}">${esc(sb.msg.text)}</div>`:''}${rows}</div>`;
 }
-SharedBackup.auto('rankings',()=>db.matches.some(m=>!m.ext)||Object.keys(notes).length||Object.keys(plans).length?backupPayload():null);
+SharedBackup.auto('rankings',()=>db.matches.some(m=>!m.ext)||Object.keys(notes).length||Object.keys(plans).length||Object.keys(matchFocus).length?backupPayload():null);
 
 render();
 loadSync();
@@ -1215,4 +1289,3 @@ if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWor
 </script>
 </body>
 </html>
-
