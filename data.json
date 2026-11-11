@@ -538,6 +538,20 @@
    "score": "1-6 4-6",
    "result": "L",
    "notes": "Mas Morado · Ciudad de la Raqueta"
+  },
+  {
+   "ext": "ptg:bec91c0d-e2ed-4a56-89f1-afeae5a68faa",
+   "date": "2026-11-10",
+   "rankingId": "ptg",
+   "type": "doubles",
+   "partner": "Jelen",
+   "opponents": [
+    "Gon Armas",
+    "C.Montero"
+   ],
+   "score": "4-6 6-7",
+   "result": "L",
+   "notes": "Mas Morado · Ciudad de la Raqueta"
   }
  ],
  "upcoming": [
@@ -597,9 +611,9 @@
   {
    "rankingId": "ptg",
    "opponent": "Por emparejar",
-   "deadline": "2026-11-10",
-   "label": "Mas Morado · Ciudad de la Raqueta · Pista 22 Cubierta · 18:00",
-   "scheduled": "2026-11-10T18:00"
+   "deadline": "2026-11-16",
+   "label": "Mas Morado · Ciudad de la Raqueta · Pista 26 Cubierta · 18:30",
+   "scheduled": "2026-11-16T18:30"
   }
  ],
  "standings": [
@@ -615,7 +629,7 @@
    "rankingId": "ptg",
    "kind": "group",
    "label": "Mas Morado · 1S27",
-   "pos": 16,
+   "pos": 18,
    "of": 51
   }
  ],
