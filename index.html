@@ -1125,7 +1125,7 @@ function loadSample(){
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const sp=e.target.closest('[data-sport]');if(sp){ui.sport=sp.dataset.sport;render();return}
+  const sp=e.target.closest('button[data-sport]');if(sp){ui.sport=sp.dataset.sport;render();return}
   const b=e.target.closest('[data-act]');if(!b)return;
   const act=b.dataset.act,id=b.dataset.id;
   if(act==='add')openDialog();
@@ -1288,4 +1288,4 @@ loadCheck();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
-</html>
+                            </html>
