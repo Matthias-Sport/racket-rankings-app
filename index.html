@@ -695,7 +695,7 @@ function mergeFocus(incoming){
 }
 function storeFocus(k,v){
  const next={...matchFocus,[k]:v};
- try{localStorage.setItem(KEY+'.focus',JSON.stringify(next));matchFocus=next;delete focusDrafts[k];focusDirty=Object.keys(focusDrafts).length>0;return true}
+ try{localStorage.setItem(KEY+'.focus',JSON.stringify(next));matchFocus=next;return true}
  catch(e){alert('Could not save match focus. Copy your words before leaving this page.');return false}
 }
 function focusSummary(){
@@ -730,14 +730,14 @@ document.addEventListener('submit',e=>{
  const changed=focus!==(old?.focus||''),now=Date.now();
  const match=m?{date:m.date,label:(m.opponents||[]).join(' & '),ranking:rankOf(m).name}:old?.match;
  if(!match)return;
- if(storeFocus(k,{worked,cost,focus,sport:form.dataset.sport,match,updated:now,chosenAt:changed?now:(old?.chosenAt||now),workedOn:changed?null:(old?.workedOn||null)})){render();toast('Match focus saved ✓')}
+ if(storeFocus(k,{worked,cost,focus,sport:form.dataset.sport,match,updated:now,chosenAt:changed?now:(old?.chosenAt||now),workedOn:changed?null:(old?.workedOn||null)})){delete focusDrafts[k];render();toast('Match focus saved ✓')}
 });
 document.addEventListener('input',e=>{if(e.target.closest('#focusForm')){focusDirty=true;const k=$('#focusForm').dataset.key;focusDrafts[k]={worked:$('#focusWorked').value,cost:$('#focusCost').value,focus:$('#focusNext').value};$('#focusSaveStatus').textContent='Unsaved changes'}});
 document.addEventListener('change',e=>{if(e.target.id==='focusMatch'){location.hash='#/focus/'+encodeURIComponent(e.target.value)}});
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]');if(!b||!b.dataset.act.startsWith('focus-'))return;
  const k=b.dataset.id,v=matchFocus[k];if(!v)return;
- if(b.dataset.act==='focus-delete'){if(!confirm('Delete this private reflection?'))return;if(storeFocus(k,{deleted:true,updated:Date.now()})){render();toast('Reflection deleted')}return}
+ if(b.dataset.act==='focus-delete'){if(!confirm('Delete this private reflection?'))return;if(storeFocus(k,{deleted:true,updated:Date.now()})){delete focusDrafts[k];render();toast('Reflection deleted')}return}
  if(b.dataset.act==='focus-worked'&&storeFocus(k,{...v,workedOn:Date.now(),updated:Date.now()})){render();toast('Marked worked on')}
  if(b.dataset.act==='focus-keep'&&storeFocus(k,{...v,workedOn:null,chosenAt:Date.now(),updated:Date.now()})){render();toast('Kept for next time')}
 });
