@@ -41,7 +41,7 @@ hand-entered matches, notes, statuses  -->  browser localStorage only (per devic
 
 **Match object:** `id`, `ts`, `date`, `rankingId`, `type` (singles/doubles), `partner`, `opponents[]`, `score` (your games first, e.g. `6-3 4-6 10-8`; `[1-0]` = match tiebreak with unknown margin; `(5-4)` = unfinished set after a retirement), `result` (W/L), `notes`, plus `ext` (synced from a site), `pos` (ladder position), `planKey` (created from a result you entered on a Next up card).
 
-**Browser storage keys** (all prefixed `courtlog.v1`): the main store, `.contacts`, `.plans`, `.notes`, `.msgtpl`, `.msgtpl2`, `.rmail`, `.rtpl`. Storage is **per web address**, so moving the site to a new address starts every device fresh. Use the Data page "Copy backup code" before any move.
+**Browser storage keys** (all prefixed `courtlog.v1`): the main store, `.contacts`, `.plans`, `.notes`, `.msgtpl`, `.msgtpl2`, `.rmail`, `.rtpl`, `.focus` (private match-focus notes, never published), `.focusmin` (match-focus card minimised to its headline; toggle on the card). Storage is **per web address**, so moving the site to a new address starts every device fresh. Use the Data page "Copy backup code" before any move.
 
 **De-duplication:** a result entered on a Next up card becomes a local match (`plan:` id). When the club site later posts the same match (same ranking, opponent and label), the synced one wins and the local one is dropped.
 
