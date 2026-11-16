@@ -702,9 +702,9 @@ function storeFocus(k,v){
 }
 function focusSummary(){
  const sports=ui.sport==='all'?['tennis','padel']:[ui.sport];
- const head=`<div class="fhead"${focusMin?'':' style="margin-bottom:10px"'}><h2>Match focus <span class="tag">private notes</span></h2><button class="sm" data-act="focus-min" aria-expanded="${!focusMin}">${focusMin?'Show':'Minimise'}</button></div>`;
- if(focusMin)return `<div class="card">${head}</div>`;
- return `<div class="card">${head}${sports.map(sport=>{
+ const head=`<div class="fhead"${focusMin?'':' style="margin-bottom:10px"'}><h2>Match focus <span class="tag">private notes</span></h2></div>`;const cardOpen=`<div class="card" data-act="focus-min" aria-expanded="${!focusMin}" style="cursor:pointer">`;
+ if(focusMin)return `${cardOpen}${head}</div>`;
+ return `${cardOpen}${head}${sports.map(sport=>{
  const active=focusEntries().filter(([k,v])=>v.sport===sport&&v.focus).sort((a,b)=>(b[1].chosenAt||0)-(a[1].chosenAt||0))[0];
  const show=active&&!active[1].workedOn;
  return `<div class="focuscarry"><b>${esc(sport==='padel'?'Padel':'Tennis')}</b>${show?`<p class="focuswords">${esc(active[1].focus)}</p><div class="mute small">From ${esc(active[1].match.date)} · ${esc(active[1].match.label)}</div><div class="row" style="margin-top:8px"><button data-act="focus-worked" data-id="${esc(active[0])}">Worked on it</button><button data-act="focus-keep" data-id="${esc(active[0])}">Keep for next time</button></div>`:'<p class="mute small">No current focus. Add one after a match if useful.</p>'}</div>`
@@ -740,7 +740,7 @@ document.addEventListener('input',e=>{if(e.target.closest('#focusForm')){focusDi
 document.addEventListener('change',e=>{if(e.target.id==='focusMatch'){location.hash='#/focus/'+encodeURIComponent(e.target.value)}});
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]');if(!b||!b.dataset.act.startsWith('focus-'))return;
- if(b.dataset.act==='focus-min'){focusMin=!focusMin;lsSet('.focusmin',focusMin);render();return}
+ if(b.dataset.act==='focus-min'){if(e.target.closest('a,button'))return;focusMin=!focusMin;lsSet('.focusmin',focusMin);render();return}
  const k=b.dataset.id,v=matchFocus[k];if(!v)return;
  if(b.dataset.act==='focus-delete'){if(!confirm('Delete this private reflection?'))return;if(storeFocus(k,{deleted:true,updated:Date.now()})){delete focusDrafts[k];render();toast('Reflection deleted')}return}
  if(b.dataset.act==='focus-worked'&&storeFocus(k,{...v,workedOn:Date.now(),updated:Date.now()})){render();toast('Marked worked on')}
