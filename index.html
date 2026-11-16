@@ -373,8 +373,7 @@ function msgText(u){
 }
 function visibleUpcoming(){return sync.upcoming.filter(u=>ui.sport==='all'||(db.rankings.find(r=>r.id===u.rankingId)||{}).sport===ui.sport)}
 function reminders(){
-  const sched=visibleUpcoming().filter(u=>u.scheduled&&(plans[planKey(u)]||{}).status!=='played').map(u=>`<div class="card">📅 <b>${esc(u.opponent==='Por emparejar'?'Pairing pending':u.opponent)}</b> · scheduled <b>${new Date(u.scheduled).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'2-digit'})}, ${u.scheduled.slice(11,16)}</b> · ${esc(u.label)}</div>`).join('');
-  return sched+visibleUpcoming().filter(u=>!u.scheduled).filter(u=>{const d=daysLeft(u.deadline);return d!==null&&d<=3&&(plans[planKey(u)]||{}).status!=='played'}).map(u=>{
+  return visibleUpcoming().filter(u=>!u.scheduled).filter(u=>{const d=daysLeft(u.deadline);return d!==null&&d<=3&&(plans[planKey(u)]||{}).status!=='played'}).map(u=>{
     const d=daysLeft(u.deadline),p=plans[planKey(u)]||{},st=(STATUS.find(x=>x[0]===(p.status||''))||[])[1];
     return `<div class="card alert">⏰ <b>${esc(u.opponent)}</b>: ${d<0?`play-by date passed ${-d} day${d===-1?'':'s'} ago`:d===0?'play-by date is <b>today</b>':`<b>${d} day${d===1?'':'s'}</b> left to play`} (${fmtDate(u.deadline)}).
       <span class="mute small">${esc(st)}${p.status==='agreed'&&p.when?' · '+esc(p.when.replace('T',' ')):''}</span></div>`}).join('');
