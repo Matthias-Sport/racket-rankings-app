@@ -455,8 +455,9 @@ function upRow(u,single){
       <div class="small" style="margin-top:4px">${esc(u.label)}</div>
       ${s.p?`<div style="margin-top:8px"><div class="small"><b>Head-to-head ${rec(s)}</b> · sets ${s.sw}–${s.sl} · games ${s.gw}–${s.gl}</div>${matchTable(desc(past).slice(0,5),{edit:false,showRank:true})}<div class="small" style="margin-top:2px"><a href="#/opponents/${encodeURIComponent(u.opponent)}">All meetings and stats →</a></div></div>`:'<div class="small" style="margin-top:4px">First meeting</div>'}
       ${note?`<div class="small" style="margin-top:4px">📝 ${esc(note)}</div>`:''}
-      <div style="margin-top:8px">${contactBlock(u.opponent,i)}</div>
-      ${planControls(u,i)}
+      ${u.rankingId==='ptg'
+        ?`<div class="mute small" style="margin-top:8px">Scheduled and scored by Padel Team Gourmet · synced to your Google Calendar automatically.</div>`
+        :`<div style="margin-top:8px">${contactBlock(u.opponent,i)}</div>${planControls(u,i)}`}
       <details data-open="scout:${i}" ${ui.open&&ui.open['scout:'+i]?'open':''} style="margin-top:10px"><summary class="small" style="cursor:pointer;color:var(--accent);min-height:32px">Scouting report</summary>${scoutBlock(u.opponent,u)}</details>
     </div></details>`;
 }
@@ -1292,4 +1293,4 @@ loadCheck();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
-  </html>
+        </html>
