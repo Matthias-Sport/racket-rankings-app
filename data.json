@@ -580,6 +580,20 @@
    "score": "6-0 6-1",
    "result": "W",
    "notes": "Fase 273 · Grupo 7 · Jornada 5"
+  },
+  {
+   "ext": "ptg:e198b181-1d4a-4c81-8fe6-aa2e02e221e8",
+   "date": "2026-11-16",
+   "rankingId": "ptg",
+   "type": "doubles",
+   "partner": "Daniel",
+   "opponents": [
+    "Gon Armas",
+    "PabloIscar"
+   ],
+   "score": "6-3 3-6 2-6",
+   "result": "L",
+   "notes": "Mas Morado · Ciudad de la Raqueta"
   }
  ],
  "upcoming": [
@@ -630,13 +644,6 @@
   {
    "rankingId": "ptg",
    "opponent": "Por emparejar",
-   "deadline": "2026-11-16",
-   "label": "Mas Morado · Ciudad de la Raqueta · Pista 26 Cubierta · 18:30",
-   "scheduled": "2026-11-16T18:30"
-  },
-  {
-   "rankingId": "ptg",
-   "opponent": "Por emparejar",
    "deadline": "2026-11-23",
    "label": "Mas Morado · Ciudad de la Raqueta · Pista 22 Cubierta · 18:00",
    "scheduled": "2026-11-23T18:00"
@@ -656,7 +663,7 @@
    "kind": "group",
    "label": "Mas Morado · 1S27",
    "pos": 13,
-   "of": 52
+   "of": 54
   }
  ],
  "scouting": {
