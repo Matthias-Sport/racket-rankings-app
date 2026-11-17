@@ -644,9 +644,16 @@
   {
    "rankingId": "ptg",
    "opponent": "Por emparejar",
+   "deadline": "2026-11-18",
+   "label": "Mas Marrón · Ciudad de la Raqueta · Pista 23 Cubierta · 19:30",
+   "scheduled": "2026-11-18T19:30"
+  },
+  {
+   "rankingId": "ptg",
+   "opponent": "Por emparejar",
    "deadline": "2026-11-23",
-   "label": "Mas Morado · Ciudad de la Raqueta · Pista 22 Cubierta · 18:00",
-   "scheduled": "2026-11-23T18:00"
+   "label": "Mas Marrón · Pro Padel Coslada · Padel 5 · 19:00",
+   "scheduled": "2026-11-23T19:00"
   }
  ],
  "standings": [
@@ -661,9 +668,9 @@
   {
    "rankingId": "ptg",
    "kind": "group",
-   "label": "Mas Morado · 1S27",
-   "pos": 13,
-   "of": 54
+   "label": "Mas Marrón · 2S26",
+   "pos": 11,
+   "of": 47
   }
  ],
  "scouting": {
