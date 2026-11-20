@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-13T23:17:43.072Z",
+ "generated": "2026-11-20T23:43:40.724Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -709,8 +709,16 @@
   "lucas ayuso cortina": {
    "name": "Lucas Ayuso Cortina",
    "source": "group",
-   "pos": 5,
-   "matches": []
+   "pos": 3,
+   "matches": [
+    {
+     "date": "2026-11-20",
+     "label": "Fase 273 · Grupo 7",
+     "vs": "Diego de Riaño Carril",
+     "score": "2-6 6-7",
+     "result": "L"
+    }
+   ]
   },
   "claudio andrade lucena": {
    "name": "Claudio Andrade Lucena",
@@ -721,14 +729,22 @@
   "ignacio moreno zapatero": {
    "name": "Ignacio Moreno Zapatero",
    "source": "group",
-   "pos": 3,
+   "pos": 5,
    "matches": []
   },
   "diego de riano carril": {
    "name": "Diego de Riaño Carril",
    "source": "group",
-   "pos": 4,
-   "matches": []
+   "pos": 2,
+   "matches": [
+    {
+     "date": "2026-11-20",
+     "label": "Fase 273 · Grupo 7",
+     "vs": "Lucas Ayuso Cortina",
+     "score": "6-2 7-6",
+     "result": "W"
+    }
+   ]
   }
  },
  "groups": [
@@ -755,8 +771,36 @@
      "rank": 1
     },
     {
-     "name": "Maxime Couvreur Couvreur",
+     "name": "Diego de Riaño Carril",
      "pos": 2,
+     "pts": 3,
+     "pj": 1,
+     "pg": 1,
+     "pp": 0,
+     "sg": 2,
+     "sp": 0,
+     "jg": 13,
+     "jp": 8,
+     "me": false,
+     "rank": 2
+    },
+    {
+     "name": "Lucas Ayuso Cortina",
+     "pos": 3,
+     "pts": 1,
+     "pj": 1,
+     "pg": 0,
+     "pp": 1,
+     "sg": 0,
+     "sp": 2,
+     "jg": 8,
+     "jp": 13,
+     "me": false,
+     "rank": 3
+    },
+    {
+     "name": "Maxime Couvreur Couvreur",
+     "pos": 4,
      "pts": 1,
      "pj": 1,
      "pg": 0,
@@ -766,38 +810,10 @@
      "jg": 1,
      "jp": 12,
      "me": false,
-     "rank": 2
-    },
-    {
-     "name": "Ignacio Moreno Zapatero",
-     "pos": 3,
-     "pts": 0,
-     "pj": 0,
-     "pg": 0,
-     "pp": 0,
-     "sg": 0,
-     "sp": 0,
-     "jg": 0,
-     "jp": 0,
-     "me": false,
-     "rank": 3
-    },
-    {
-     "name": "Diego de Riaño Carril",
-     "pos": 4,
-     "pts": 0,
-     "pj": 0,
-     "pg": 0,
-     "pp": 0,
-     "sg": 0,
-     "sp": 0,
-     "jg": 0,
-     "jp": 0,
-     "me": false,
      "rank": 4
     },
     {
-     "name": "Lucas Ayuso Cortina",
+     "name": "Ignacio Moreno Zapatero",
      "pos": 5,
      "pts": 0,
      "pj": 0,
