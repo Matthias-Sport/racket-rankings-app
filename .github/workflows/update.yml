@@ -1,7 +1,11 @@
 name: Update results
 on:
   schedule:
-    - cron: '0 6,12,18 * * *'
+    # Once a day at 06:00 Madrid time. GitHub cron is UTC only, so there are two
+    # entries and the gate step lets through only the one that matches Madrid's
+    # current offset (05:00 UTC in winter, 04:00 UTC in summer).
+    - cron: '0 5 * * *'
+    - cron: '0 4 * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -9,12 +13,28 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - id: gate
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          off=$(TZ=Europe/Madrid date +%z)
+          go=true
+          if [ "$EVENT" = "schedule" ]; then
+            if [ "$off" = "+0100" ] && [ "$SCHEDULE" != "0 5 * * *" ]; then go=false; fi
+            if [ "$off" = "+0200" ] && [ "$SCHEDULE" != "0 4 * * *" ]; then go=false; fi
+          fi
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+      - if: steps.gate.outputs.go == 'true'
+        uses: actions/checkout@v4
+      - if: steps.gate.outputs.go == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/scrape.mjs
-      - run: |
+      - if: steps.gate.outputs.go == 'true'
+        run: node scripts/scrape.mjs
+      - if: steps.gate.outputs.go == 'true'
+        run: |
           git config user.name "racket-rankings bot"
           git config user.email "actions@users.noreply.github.com"
           git add data.json
