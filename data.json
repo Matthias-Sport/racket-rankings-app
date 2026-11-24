@@ -608,6 +608,20 @@
    "score": "3-6 6-1 5-7",
    "result": "L",
    "notes": "Mas Marrón · Ciudad de la Raqueta"
+  },
+  {
+   "ext": "ptg:dfdc8eb6-9c6a-4669-a167-21d13a5b8e5d",
+   "date": "2026-11-23",
+   "rankingId": "ptg",
+   "type": "doubles",
+   "partner": "Pablo",
+   "opponents": [
+    "Farrajota",
+    "Adolfoab"
+   ],
+   "score": "2-6 2-6",
+   "result": "L",
+   "notes": "Mas Marrón · Pro Padel Coslada"
   }
  ],
  "upcoming": [
@@ -658,9 +672,9 @@
   {
    "rankingId": "ptg",
    "opponent": "Por emparejar",
-   "deadline": "2026-11-23",
-   "label": "Mas Marrón · Pro Padel Coslada · Padel 5 · 19:00",
-   "scheduled": "2026-11-23T19:00"
+   "deadline": "2026-11-30",
+   "label": "Mas Marrón · Ciudad de la Raqueta · Pista 23 Cubierta · 18:30",
+   "scheduled": "2026-11-30T18:30"
   }
  ],
  "standings": [
@@ -675,9 +689,9 @@
   {
    "rankingId": "ptg",
    "kind": "group",
-   "label": "Mas Marrón · 2S26 · unranked until 2 matches played (1/2 played, provisional)",
-   "pos": 15,
-   "of": 49
+   "label": "Mas Marrón · 2S26",
+   "pos": 18,
+   "of": 22
   }
  ],
  "scouting": {
