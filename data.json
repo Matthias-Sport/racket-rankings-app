@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-20T23:43:40.724Z",
+ "generated": "2026-11-25T09:46:44.810Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -622,6 +622,20 @@
    "score": "2-6 2-6",
    "result": "L",
    "notes": "Mas Marrón · Pro Padel Coslada"
+  },
+  {
+   "ext": "cdc:428:94-101",
+   "date": "2026-11-24",
+   "rankingId": "cdc",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Jesús Revilla Alvarez"
+   ],
+   "score": "6-0 6-4",
+   "result": "W",
+   "notes": "Cuadro 428 · Serie 7",
+   "pos": 101
   }
  ],
  "upcoming": [
@@ -663,21 +677,21 @@
   },
   {
    "rankingId": "cdc",
-   "opponent": "Jesús Revilla Alvarez",
-   "deadline": "2026-11-24",
-   "label": "Cuadro 428 · Serie 7",
-   "myPos": 101,
-   "oppPos": 94
+   "opponent": "Alfredo García Muñoz",
+   "deadline": "2026-12-08",
+   "label": "Cuadro 429 · Serie 1",
+   "myPos": 94,
+   "oppPos": 93
   }
  ],
  "standings": [
   {
    "rankingId": "cdc",
    "kind": "ladder",
-   "label": "Cuadro 428 · Serie 7",
-   "pos": 101,
+   "label": "Cuadro 429 · Serie 1",
+   "pos": 94,
    "of": 216,
-   "cuadro": 428
+   "cuadro": 429
   },
   {
    "rankingId": "ptg",
@@ -688,27 +702,99 @@
   }
  ],
  "scouting": {
-  "jesus revilla alvarez": {
-   "name": "Jesús Revilla Alvarez",
+  "alfredo garcia munoz": {
+   "name": "Alfredo García Muñoz",
    "source": "cuadros",
-   "pos": 94,
+   "pos": 93,
    "matches": [
+    {
+     "date": "2026-11-24",
+     "label": "Cuadro 428 · Serie 7",
+     "vs": "Manuel de Castro Zurita",
+     "vsPos": 93,
+     "theirPos": 86,
+     "score": "7-5 0-6 8-10",
+     "result": "L"
+    },
     {
      "date": "2026-11-10",
      "label": "Cuadro 427 · Serie 5",
-     "vs": "Ignacio Moreno Zapatero",
-     "vsPos": 89,
-     "theirPos": 94,
-     "score": "6-2 2-6 8-10",
+     "vs": "Jesús González González",
+     "vsPos": 81,
+     "theirPos": 86,
+     "score": "2-6 6-4 4-10",
      "result": "L"
     },
     {
      "date": "2026-10-27",
      "label": "Cuadro 426 · Serie 3",
-     "vs": "Fernando Touchard Díaz-Ambrona",
-     "vsPos": 94,
-     "theirPos": 97,
-     "score": "7-6 6-3",
+     "vs": "Ignacio Moreno Zapatero",
+     "vsPos": 89,
+     "theirPos": 86,
+     "score": "1-6 7-6 10-5",
+     "result": "W"
+    },
+    {
+     "date": "2026-10-13",
+     "label": "Cuadro 425 · Serie 1",
+     "vs": "Javier Mendizábal Patiño",
+     "vsPos": 85,
+     "theirPos": 86,
+     "score": "0-6 1-6",
+     "result": "L"
+    },
+    {
+     "date": "2026-06-30",
+     "label": "Cuadro 424 · Serie 3",
+     "vs": "Ignacio Moreno Zapatero",
+     "vsPos": 83,
+     "theirPos": 80,
+     "score": "3-6 6-4 10-6",
+     "result": "W"
+    },
+    {
+     "date": "2026-05-19",
+     "label": "Cuadro 421 · Serie 5",
+     "vs": "Borja Areitio Rodriguez",
+     "vsPos": 80,
+     "theirPos": 75,
+     "score": "3-6 6-4 4-10",
+     "result": "L"
+    },
+    {
+     "date": "2026-05-05",
+     "label": "Cuadro 420 · Serie 3",
+     "vs": "Ricardo Galeote Lago",
+     "vsPos": 75,
+     "theirPos": 72,
+     "score": "0-6 0-6",
+     "result": "L"
+    },
+    {
+     "date": "2026-04-21",
+     "label": "Cuadro 419 · Serie 1",
+     "vs": "Alberto Fontana Sánchez",
+     "vsPos": 71,
+     "theirPos": 72,
+     "score": "5-7 4-6",
+     "result": "L"
+    },
+    {
+     "date": "2026-04-07",
+     "label": "Cuadro 418 · Serie 7",
+     "vs": "Luis Eugui Ugarte",
+     "vsPos": 72,
+     "theirPos": 79,
+     "score": "ret.",
+     "result": "W"
+    },
+    {
+     "date": "2026-03-17",
+     "label": "Cuadro 417 · Serie 5",
+     "vs": "Iñigo Peñaranda Real",
+     "vsPos": 79,
+     "theirPos": 84,
+     "score": "1-6 7-6 10-8",
      "result": "W"
     }
    ]
@@ -716,7 +802,7 @@
   "lucas ayuso cortina": {
    "name": "Lucas Ayuso Cortina",
    "source": "group",
-   "pos": 3,
+   "pos": 4,
    "matches": [
     {
      "date": "2026-11-20",
@@ -742,8 +828,15 @@
   "diego de riano carril": {
    "name": "Diego de Riaño Carril",
    "source": "group",
-   "pos": 2,
+   "pos": 1,
    "matches": [
+    {
+     "date": "2026-11-23",
+     "label": "Fase 273 · Grupo 7",
+     "vs": "Maxime Couvreur Couvreur",
+     "score": "6-3 7-6",
+     "result": "W"
+    },
     {
      "date": "2026-11-20",
      "label": "Fase 273 · Grupo 7",
@@ -764,8 +857,22 @@
    "current": true,
    "players": [
     {
-     "name": "Matthias Homan",
+     "name": "Diego de Riaño Carril",
      "pos": 1,
+     "pts": 6,
+     "pj": 2,
+     "pg": 2,
+     "pp": 0,
+     "sg": 4,
+     "sp": 0,
+     "jg": 26,
+     "jp": 17,
+     "me": false,
+     "rank": 1
+    },
+    {
+     "name": "Matthias Homan",
+     "pos": 2,
      "pts": 3,
      "pj": 1,
      "pg": 1,
@@ -775,25 +882,25 @@
      "jg": 12,
      "jp": 1,
      "me": true,
-     "rank": 1
-    },
-    {
-     "name": "Diego de Riaño Carril",
-     "pos": 2,
-     "pts": 3,
-     "pj": 1,
-     "pg": 1,
-     "pp": 0,
-     "sg": 2,
-     "sp": 0,
-     "jg": 13,
-     "jp": 8,
-     "me": false,
      "rank": 2
     },
     {
-     "name": "Lucas Ayuso Cortina",
+     "name": "Maxime Couvreur Couvreur",
      "pos": 3,
+     "pts": 2,
+     "pj": 2,
+     "pg": 0,
+     "pp": 2,
+     "sg": 0,
+     "sp": 4,
+     "jg": 10,
+     "jp": 25,
+     "me": false,
+     "rank": 3
+    },
+    {
+     "name": "Lucas Ayuso Cortina",
+     "pos": 4,
      "pts": 1,
      "pj": 1,
      "pg": 0,
@@ -802,20 +909,6 @@
      "sp": 2,
      "jg": 8,
      "jp": 13,
-     "me": false,
-     "rank": 3
-    },
-    {
-     "name": "Maxime Couvreur Couvreur",
-     "pos": 4,
-     "pts": 1,
-     "pj": 1,
-     "pg": 0,
-     "pp": 1,
-     "sg": 0,
-     "sp": 2,
-     "jg": 1,
-     "jp": 12,
      "me": false,
      "rank": 4
     },
@@ -849,7 +942,7 @@
     }
    ],
    "overall": {
-    "pos": 35,
+    "pos": 36,
     "of": 88
    }
   }
