@@ -682,6 +682,13 @@
    "label": "Cuadro 429 · Serie 1",
    "myPos": 94,
    "oppPos": 93
+  },
+  {
+   "rankingId": "ptg",
+   "opponent": "Por emparejar",
+   "deadline": "2026-12-01",
+   "label": "Mas Marrón · Ciudad de la Raqueta · Pista 25 Cubierta · 18:00",
+   "scheduled": "2026-12-01T18:00"
   }
  ],
  "standings": [
@@ -697,8 +704,8 @@
    "rankingId": "ptg",
    "kind": "group",
    "label": "Mas Marrón · 2S26",
-   "pos": 18,
-   "of": 22
+   "pos": 20,
+   "of": 51
   }
  ],
  "scouting": {
