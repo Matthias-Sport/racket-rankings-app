@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-25T09:46:44.810Z",
+ "generated": "2026-11-26T14:45:47.096Z",
  "player": "Matthias Homan",
  "rankings": [
   {
@@ -636,18 +636,23 @@
    "result": "W",
    "notes": "Cuadro 428 · Serie 7",
    "pos": 101
+  },
+  {
+   "ext": "ccvm:44455",
+   "phase": 273,
+   "date": "2026-11-25",
+   "rankingId": "ccvm",
+   "type": "singles",
+   "partner": "",
+   "opponents": [
+    "Lucas Ayuso Cortina"
+   ],
+   "score": "6-0 6-2",
+   "result": "W",
+   "notes": "Fase 273 · Grupo 7 · Jornada 1"
   }
  ],
  "upcoming": [
-  {
-   "rankingId": "ccvm",
-   "opponent": "Lucas Ayuso Cortina",
-   "deadline": "2027-01-07",
-   "label": "Fase 273 · Grupo 7 · Jornada 1",
-   "phase": 273,
-   "group": "Grupo 7",
-   "jornada": 1
-  },
   {
    "rankingId": "ccvm",
    "opponent": "Claudio Andrade Lucena",
@@ -806,20 +811,6 @@
     }
    ]
   },
-  "lucas ayuso cortina": {
-   "name": "Lucas Ayuso Cortina",
-   "source": "group",
-   "pos": 4,
-   "matches": [
-    {
-     "date": "2026-11-20",
-     "label": "Fase 273 · Grupo 7",
-     "vs": "Diego de Riaño Carril",
-     "score": "2-6 6-7",
-     "result": "L"
-    }
-   ]
-  },
   "claudio andrade lucena": {
    "name": "Claudio Andrade Lucena",
    "source": "group",
@@ -835,7 +826,7 @@
   "diego de riano carril": {
    "name": "Diego de Riaño Carril",
    "source": "group",
-   "pos": 1,
+   "pos": 2,
    "matches": [
     {
      "date": "2026-11-23",
@@ -864,8 +855,22 @@
    "current": true,
    "players": [
     {
-     "name": "Diego de Riaño Carril",
+     "name": "Matthias Homan",
      "pos": 1,
+     "pts": 6,
+     "pj": 2,
+     "pg": 2,
+     "pp": 0,
+     "sg": 4,
+     "sp": 0,
+     "jg": 24,
+     "jp": 3,
+     "me": true,
+     "rank": 1
+    },
+    {
+     "name": "Diego de Riaño Carril",
+     "pos": 2,
      "pts": 6,
      "pj": 2,
      "pg": 2,
@@ -875,20 +880,6 @@
      "jg": 26,
      "jp": 17,
      "me": false,
-     "rank": 1
-    },
-    {
-     "name": "Matthias Homan",
-     "pos": 2,
-     "pts": 3,
-     "pj": 1,
-     "pg": 1,
-     "pp": 0,
-     "sg": 2,
-     "sp": 0,
-     "jg": 12,
-     "jp": 1,
-     "me": true,
      "rank": 2
     },
     {
@@ -908,14 +899,14 @@
     {
      "name": "Lucas Ayuso Cortina",
      "pos": 4,
-     "pts": 1,
-     "pj": 1,
+     "pts": 2,
+     "pj": 2,
      "pg": 0,
-     "pp": 1,
+     "pp": 2,
      "sg": 0,
-     "sp": 2,
-     "jg": 8,
-     "jp": 13,
+     "sp": 4,
+     "jg": 10,
+     "jp": 25,
      "me": false,
      "rank": 4
     },
@@ -949,7 +940,7 @@
     }
    ],
    "overall": {
-    "pos": 36,
+    "pos": 35,
     "of": 88
    }
   }
