@@ -575,7 +575,7 @@ const fmtD=d=>d?d.slice(8,10)+'/'+d.slice(5,7):'';
 function standingBlock(rankingId){
   const st=sync.standings.find(x=>x.rankingId===rankingId),g=sync.groups.find(x=>x.rankingId===rankingId);
   let h='';
-  if(st)h+=`<div style="font-size:22px;font-weight:700">#${st.pos}<span class="mute small" style="font-weight:400"> of ${st.of}${st.kind==='group'?'':' on the ladder'} · ${esc(st.label)}</span></div>`;
+  if(st)h+=st.pos==null?`<div style="font-size:22px;font-weight:700">Sin clasificar<span class="mute small" style="font-weight:400"> · ${st.played}/${st.min} partidos · sería #${st.wouldBe} de ${st.of} · ${esc(st.label)}</span></div>`:`<div style="font-size:22px;font-weight:700">#${st.pos}<span class="mute small" style="font-weight:400"> of ${st.of}${st.kind==='group'?'':' on the ladder'} · ${esc(st.label)}</span></div>`;
   if(g){
     const me=g.players.find(p=>p.me);
     h+=`<div style="font-size:18px;font-weight:700">${esc(g.name)}${me&&(me.rank||me.pos)?` · ${ord(me.rank||me.pos)} of ${g.players.length}`:''}<span class="mute small" style="font-weight:400"> · Fase ${g.phase}, ${g.current?'in progress':'finished'} (${fmtD(g.start)}–${fmtD(g.end)})</span></div>`;
