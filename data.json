@@ -705,13 +705,7 @@
    "of": 216,
    "cuadro": 429
   },
-  {
-   "rankingId": "ptg",
-   "kind": "group",
-   "label": "Mas Marrón · 2S26",
-   "pos": 20,
-   "of": 51
-  }
+  {"rankingId": "ptg", "kind": "group", "label": "Mas Marrón · 2S26", "pos": null, "of": 51, "wouldBe": 11, "played": 2, "min": 3}
  ],
  "scouting": {
   "alfredo garcia munoz": {
